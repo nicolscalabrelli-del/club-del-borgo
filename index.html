@@ -326,7 +326,7 @@ document.querySelectorAll("[data-info]").forEach(b=>b.onclick=()=>{$("infoConten
 
 /* Staff: richiede accesso cliente già effettuato con profilo role=staff/admin */
 $("staffEntry").onclick=()=>{openOverlay("staffOverlay");$("staffLoginView").style.display="block";$("staffPanelView").style.display="none"};
-$("staffLoginBtn").onclick=async()=>{if($("staffCode").value.trim()!=="32-89")return notice("staffNotice","Codice errato.",false);const p=await loadProfile();if(!p||!["staff","admin"].includes(p.role))return notice("staffNotice","Accedi prima con l’account staff.",false);$("staffLoginView").style.display="none";$("staffPanelView").style.display="block";renderList()};
+$("staffLoginBtn").onclick=async()=>{if($("staffCode").value.trim()!=="3289")return notice("staffNotice","Codice errato.",false);const p=await loadProfile();if(!p||!["staff","admin"].includes(p.role))return notice("staffNotice","Accedi prima con l’account staff.",false);$("staffLoginView").style.display="none";$("staffPanelView").style.display="block";renderList()};
 $("staffLogout").onclick=async()=>{await stopScanner();closeOverlay("staffOverlay")};
 $("staffSearch").oninput=()=>renderList($("staffSearch").value);
 
