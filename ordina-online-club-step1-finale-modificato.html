@@ -1,0 +1,2373 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menu con prezzi — La Piadina del Borgo Paglia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A15C;
+    --gold-dark: #B08A45;
+    --brown: #8B5A2E;
+    --ink: #2B2420;
+    --line: rgba(43,36,32,0.1);
+    --cream: #FAF7F2;
+    --green: #4A8B5C;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    font-family:'Karla',sans-serif;
+    background:#fff;
+    color:var(--ink);
+    line-height:1.5;
+    padding-bottom:90px;
+  }
+  h1,h2,h3 { font-family:'Fraunces',serif; }
+
+  /* Tabs nav */
+  .tabs-wrap {
+    position:sticky; top:0; z-index:40;
+    background:#fff;
+    border-bottom:1px solid var(--line);
+    overflow-x:auto;
+    white-space:nowrap;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .tabs-wrap::-webkit-scrollbar { display:none; }
+  .tabs {
+    display:inline-flex;
+    padding:18px 16px;
+    gap:28px;
+  }
+  .tab {
+    font-size:0.92rem;
+    font-weight:700;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:rgba(43,36,32,0.4);
+    background:none; border:none;
+    cursor:pointer;
+    padding:4px 0;
+    white-space:nowrap;
+  }
+  .tab.active { color:var(--ink); border-bottom:2px solid var(--gold-dark); }
+
+  .wrap { max-width:640px; margin:0 auto; padding:0 20px; }
+
+  .cat-banner {
+    background:var(--gold);
+    color:#fff;
+    display:inline-block;
+    padding:14px 32px 14px 24px;
+    font-size:1.5rem;
+    font-weight:700;
+    margin:28px 0 20px;
+    position:relative;
+    clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%);
+  }
+
+  .cat-desc { font-size:0.9rem; color:rgba(43,36,32,0.6); margin:-8px 0 20px; max-width:56ch; }
+  .cat-desc.box {
+    background:var(--cream);
+    border-left:4px solid var(--gold-dark);
+    padding:16px 18px;
+    border-radius:0 8px 8px 0;
+    margin:20px 0;
+    color:rgba(43,36,32,0.75);
+  }
+  .cat-desc.box strong { color:var(--brown); font-family:'Fraunces',serif; }
+
+  .item {
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:14px;
+    padding:16px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .item-left { flex:1; }
+  .item-name { font-weight:700; font-size:1.05rem; }
+  .item-unit { font-size:0.8rem; color:rgba(43,36,32,0.45); font-weight:400; }
+  .item-desc { font-size:0.88rem; color:rgba(43,36,32,0.55); font-style:italic; margin-top:3px; }
+  .item-note { font-size:0.78rem; color:rgba(43,36,32,0.45); margin-top:3px; }
+
+  .item-right {
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:8px;
+    flex-shrink:0;
+  }
+  .item-photo {
+    width:62px; height:62px; border-radius:10px; object-fit:cover;
+    flex-shrink:0; margin-right:12px; background:var(--cream);
+  }
+  .item-price {
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    color:var(--gold-dark);
+    font-size:1.1rem;
+    white-space:nowrap;
+  }
+  .item-sub-price { font-size:0.75rem; color:rgba(43,36,32,0.4); text-align:right; }
+
+  .item-config-btn {
+    background:var(--gold);
+    color:#fff;
+    border:none;
+    padding:9px 14px;
+    border-radius:100px;
+    font-weight:700;
+    font-size:0.8rem;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+
+  .qty-control {
+    display:flex; align-items:center;
+    background:var(--cream);
+    border-radius:100px;
+    min-width:92px;
+    justify-content:center;
+  }
+  .qty-btn {
+    width:30px; height:30px;
+    border:none; background:transparent;
+    color:var(--gold-dark);
+    font-size:1.1rem; font-weight:700;
+    cursor:pointer;
+  }
+  .qty-val { min-width:22px; text-align:center; font-weight:700; font-size:0.95rem; }
+
+  .item.unavailable { opacity:0.45; position:relative; }
+  .item.unavailable .qty-control { pointer-events:none; opacity:0.5; }
+  .item-unavailable-tag {
+    display:none;
+    font-size:0.75rem;
+    font-weight:700;
+    color:#B23B3B;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    margin-top:4px;
+  }
+  .item.unavailable .item-unavailable-tag { display:block; }
+
+  /* Pannello admin */
+  .admin-toggle-link {
+    display:block;
+    text-align:center;
+    font-size:0.75rem;
+    color:rgba(43,36,32,0.35);
+    padding:16px;
+    margin-bottom:70px;
+    text-decoration:underline;
+  }
+  .admin-overlay {
+    position:fixed; inset:0; background:rgba(43,36,32,0.6);
+    display:none; align-items:flex-end; z-index:200;
+  }
+  .admin-overlay.visible { display:flex; }
+  .admin-sheet {
+    background:#fff; width:100%; max-height:85vh; overflow-y:auto;
+    border-radius:20px 20px 0 0; padding:24px 20px 40px; position:relative;
+  }
+  .admin-sheet h2 { font-size:1.2rem; margin-bottom:4px; }
+  .admin-sheet .admin-sub { font-size:0.82rem; color:rgba(43,36,32,0.55); margin-bottom:20px; }
+
+  .admin-code-input {
+    width:100%; padding:14px; border:1.5px solid var(--line); border-radius:10px;
+    font-size:1.1rem; text-align:center; letter-spacing:0.3em; margin-bottom:10px;
+    font-family:'Karla',sans-serif;
+  }
+  .admin-code-error { color:var(--red); font-size:0.85rem; font-weight:700; margin-bottom:10px; }
+  .admin-code-btn {
+    width:100%; padding:14px; background:var(--ink); color:var(--cream);
+    border:none; border-radius:10px; font-weight:700; font-size:1rem; cursor:pointer;
+  }
+
+  .admin-tabs { display:flex; gap:8px; margin-bottom:14px; }
+  .admin-tab-btn {
+    flex:1; padding:10px; border:1.5px solid var(--line); background:#fff;
+    border-radius:10px; font-weight:700; font-size:0.9rem; cursor:pointer;
+    color:rgba(43,36,32,0.55); font-family:'Karla',sans-serif;
+  }
+  .admin-tab-btn.active { background:var(--ink); color:var(--cream); border-color:var(--ink); }
+
+  .admin-sync {
+    font-size:0.78rem; font-weight:700; margin-bottom:12px; min-height:16px;
+  }
+  .admin-sync.saving { color:rgba(43,36,32,0.5); }
+  .admin-sync.ok { color:#2E6B40; }
+  .admin-sync.err { color:var(--red); }
+  .admin-day-select {
+    width:100%; padding:11px 12px; border:1.5px solid var(--line); border-radius:8px;
+    font-size:0.95rem; font-family:'Karla',sans-serif; margin-bottom:8px;
+  }
+
+  .admin-save-btn {
+    width:100%; padding:14px; background:#4A8B5C; color:#fff; border:none;
+    border-radius:10px; font-weight:700; font-size:1rem; cursor:pointer;
+    margin-bottom:14px; font-family:'Karla',sans-serif;
+  }
+  .admin-save-btn.dirty { background:var(--red); }
+  .admin-save-btn:disabled { opacity:0.5; }
+
+  .item-stock-alert {
+    font-size:0.78rem; color:var(--red); font-weight:700; margin-top:4px;
+  }
+
+  .config-ing-row.is-out { background:rgba(178,59,59,0.06); }
+  .config-ing-out { font-size:0.75rem; color:var(--red); font-weight:700; margin-top:2px; }
+
+  .subst-skip-btn {
+    width:100%; padding:14px; background:var(--ink); color:var(--cream);
+    border:none; border-radius:10px; font-weight:700; font-size:0.95rem;
+    cursor:pointer; margin-bottom:16px; font-family:'Karla',sans-serif;
+  }
+  .subst-or {
+    text-align:center; font-size:0.85rem; color:rgba(43,36,32,0.5);
+    font-weight:700; margin-bottom:12px;
+  }
+  #substList {
+    max-height:280px; overflow-y:auto; border:1.5px solid var(--line);
+    border-radius:12px; position:relative;
+  }
+  .subst-row {
+    padding:14px; border-bottom:1px solid var(--line); cursor:pointer;
+    font-size:0.95rem; font-weight:600; display:flex; justify-content:space-between;
+  }
+  .subst-row:last-child { border-bottom:none; }
+  .subst-row:active { background:var(--cream); }
+  .subst-row-price { color:var(--gold-dark); font-weight:700; font-size:0.85rem; }
+  .admin-close {
+    position:absolute; top:16px; right:16px; background:var(--cream); border:none;
+    width:32px; height:32px; border-radius:50%; font-size:1rem; cursor:pointer;
+  }
+  .admin-cat-title {
+    font-weight:700; font-size:0.95rem; color:var(--gold-dark);
+    margin:18px 0 8px; text-transform:uppercase; letter-spacing:0.03em;
+  }
+  .admin-item-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 0; border-bottom:1px solid var(--line); gap:12px;
+  }
+  .admin-item-name { font-size:0.9rem; flex:1; }
+  .admin-switch {
+    position:relative; width:46px; height:26px; flex-shrink:0;
+  }
+  .admin-switch input { opacity:0; width:0; height:0; }
+  .admin-switch-slider {
+    position:absolute; inset:0; background:#4A8B5C; border-radius:100px;
+    cursor:pointer; transition:0.2s;
+  }
+  .admin-switch-slider::before {
+    content:""; position:absolute; width:20px; height:20px; left:3px; top:3px;
+    background:#fff; border-radius:50%; transition:0.2s;
+  }
+  .admin-switch.on .admin-switch-slider { background:#B23B3B; }
+  .admin-switch.on .admin-switch-slider::before { transform:translateX(20px); }
+  .admin-toggle-row { cursor:pointer; }
+  .admin-switch-label { font-size:0.68rem; text-align:center; margin-top:2px; color:rgba(43,36,32,0.5); }
+
+  .custom-section {
+    background:var(--cream);
+    border-radius:16px;
+    padding:24px 20px;
+    margin:24px 0 8px;
+    border:2px dashed var(--gold-dark);
+  }
+  .custom-section h2 {
+    font-size:1.3rem;
+    color:var(--brown);
+    margin-bottom:6px;
+  }
+  .custom-section .sub {
+    font-size:0.88rem;
+    color:rgba(43,36,32,0.6);
+    margin-bottom:18px;
+  }
+  .custom-item {
+    background:#fff;
+    border-radius:12px;
+    padding:16px;
+    margin-bottom:14px;
+    border:1px solid var(--line);
+  }
+  .custom-item:last-child { margin-bottom:0; }
+  .custom-item-title {
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:1.05rem;
+    margin-bottom:10px;
+  }
+  .custom-item select, .custom-item textarea {
+    width:100%;
+    padding:11px 12px;
+    border:1.5px solid var(--line);
+    border-radius:8px;
+    font-size:0.95rem;
+    font-family:'Karla',sans-serif;
+    margin-bottom:10px;
+    resize:vertical;
+  }
+  .custom-item textarea { min-height:60px; }
+  .custom-item select:focus, .custom-item textarea:focus { outline:none; border-color:var(--gold-dark); }
+  .custom-item-footer {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .custom-item-note {
+    font-size:0.76rem;
+    color:rgba(43,36,32,0.45);
+  }
+
+  /* Configuratore ingredienti */
+  .configure-btn {
+    width:100%;
+    padding:12px;
+    background:var(--gold);
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    font-weight:700;
+    font-size:0.9rem;
+    cursor:pointer;
+    margin-top:4px;
+  }
+  .configure-summary {
+    font-size:0.82rem;
+    color:rgba(43,36,32,0.6);
+    margin-top:8px;
+    min-height:18px;
+  }
+
+  .config-overlay {
+    position:fixed; inset:0; background:rgba(43,36,32,0.55);
+    display:none; align-items:flex-end; z-index:200;
+  }
+  .config-overlay.visible { display:flex; }
+  .config-sheet {
+    background:#fff; width:100%; max-height:88vh; overflow-y:auto;
+    -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+    border-radius:20px 20px 0 0; padding:24px 20px 30px; position:relative;
+  }
+  .config-sheet h2 { font-size:1.2rem; margin-bottom:4px; }
+  .config-sheet .config-sub { font-size:0.85rem; color:rgba(43,36,32,0.6); margin-bottom:16px; }
+  .config-max-note {
+    background:var(--cream); border-radius:8px; padding:8px 12px;
+    font-size:0.82rem; font-weight:700; color:var(--brown); margin-bottom:14px;
+  }
+  .config-close {
+    position:absolute; top:16px; right:16px; background:var(--cream); border:none;
+    width:32px; height:32px; border-radius:50%; font-size:1rem; cursor:pointer;
+  }
+
+  .config-base-price {
+    background:var(--cream); border-radius:10px; padding:12px 14px;
+    font-size:0.9rem; margin-bottom:16px; display:flex; justify-content:space-between;
+  }
+
+  .config-impasto-row { margin-bottom:16px; }
+  .config-impasto-row select {
+    width:100%; padding:11px 12px; border:1.5px solid var(--line); border-radius:8px;
+    font-size:0.95rem; font-family:'Karla',sans-serif;
+  }
+  .upsell-group-title {
+    font-family:'Fraunces',serif; font-weight:700; font-size:1rem;
+    color:var(--gold-dark); margin:14px 0 6px;
+  }
+  .upsell-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:12px 0; border-bottom:1px solid var(--line); gap:10px;
+  }
+  .upsell-name { font-size:0.95rem; font-weight:600; flex:1; }
+  .upsell-price { font-weight:700; color:var(--gold-dark); font-size:0.9rem; }
+
+  .config-recognized {
+    background:rgba(74,139,92,0.12);
+    border:1.5px solid var(--green);
+    color:#2E6B40;
+    border-radius:12px;
+    padding:14px 16px;
+    font-size:0.92rem;
+    line-height:1.45;
+    margin-bottom:14px;
+  }
+
+  .config-search {
+    width:100%; padding:11px 14px; border:1.5px solid var(--line); border-radius:10px;
+    font-size:0.9rem; margin-bottom:12px;
+  }
+
+  #configIngList {
+    max-height:380px;
+    overflow-y:auto;
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    margin-bottom:8px;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    touch-action:pan-y;
+    position:relative;
+  }
+
+  .config-alpha-bar {
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    margin-bottom:10px;
+  }
+  .config-alpha-btn {
+    min-width:32px;
+    height:34px;
+    border:1.5px solid var(--line);
+    background:#fff;
+    border-radius:100px;
+    font-weight:700;
+    font-size:0.82rem;
+    color:var(--brown);
+    cursor:pointer;
+    padding:0 12px;
+    font-family:'Karla',sans-serif;
+  }
+  .config-alpha-btn.active { background:var(--gold); color:#fff; border-color:var(--gold); }
+  .config-alpha-btn:active { background:var(--gold); color:#fff; }
+
+  .config-letter-header {
+    padding:10px 14px;
+    background:var(--cream);
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:1rem;
+    color:var(--gold-dark);
+  }
+
+  .config-ing-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 14px; border-bottom:1px solid var(--line); gap:10px;
+  }
+  .config-ing-row:last-child { border-bottom:none; }
+  .config-ing-name { font-size:0.95rem; font-weight:600; flex:1; }
+  .config-ing-price { font-size:0.82rem; color:var(--gold-dark); font-weight:700; margin-right:8px; }
+  .config-ing-qty {
+    display:flex; align-items:center; gap:10px; flex-shrink:0;
+  }
+  .config-ing-qty button {
+    width:32px; height:32px; border-radius:50%; border:1.5px solid var(--line);
+    background:#fff; font-weight:700; cursor:pointer; color:var(--brown); font-size:1.1rem;
+  }
+  .config-ing-qty-val { min-width:18px; text-align:center; font-weight:700; font-size:0.95rem; }
+
+  .config-total-bar {
+    position:sticky; bottom:0; background:#fff; border-top:2px solid var(--line);
+    padding:14px 0 4px; margin-top:16px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .config-total-label { font-size:0.9rem; color:rgba(43,36,32,0.6); }
+  .config-total-value {
+    font-family:'Fraunces',serif; font-weight:700; font-size:1.3rem; color:var(--gold-dark);
+  }
+  .config-confirm-btn {
+    width:100%; padding:15px; background:var(--green); color:#fff; border:none;
+    border-radius:12px; font-weight:700; font-size:1rem; cursor:pointer; margin-top:14px;
+  }
+
+  .footer-info {
+    text-align:center;
+    padding:40px 20px 20px;
+    color:rgba(43,36,32,0.55);
+    font-size:0.85rem;
+  }
+  .footer-info a { color:var(--brown); font-weight:700; text-decoration:none; }
+
+  /* Cart bar */
+  .cart-bar {
+    position:fixed; bottom:0; left:0; right:0;
+    background:var(--ink); color:#FAF7F2;
+    padding:14px 18px;
+    display:none; align-items:center; justify-content:space-between;
+    box-shadow:0 -4px 16px rgba(0,0,0,0.15);
+    z-index:50;
+  }
+  .cart-bar.visible { display:flex; }
+  .cart-bar .info { font-size:0.82rem; color:rgba(250,247,242,0.7); }
+  .cart-bar .total { font-family:'Fraunces',serif; font-size:1.15rem; font-weight:700; }
+  .cart-bar button {
+    background:var(--gold);
+    color:var(--ink);
+    border:none; padding:12px 22px; border-radius:100px;
+    font-weight:700; font-size:0.95rem; cursor:pointer;
+  }
+
+  /* Modale */
+  .overlay {
+    position:fixed; inset:0; background:rgba(43,36,32,0.55);
+    display:none; align-items:flex-end; z-index:100;
+  }
+  .overlay.visible { display:flex; }
+  .sheet {
+    background:#fff; width:100%; max-height:88vh; overflow-y:auto;
+    border-radius:20px 20px 0 0; padding:26px 22px 30px;
+    position:relative;
+    animation:slideup 0.25s ease;
+  }
+  @keyframes slideup { from{transform:translateY(30px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+  .sheet h2 { font-size:1.3rem; margin-bottom:4px; }
+  .sheet-sub { font-size:0.85rem; color:rgba(43,36,32,0.6); margin-bottom:20px; }
+
+  .order-summary { background:var(--cream); border-radius:12px; padding:14px 16px; margin-bottom:22px; font-size:0.9rem; max-height:220px; overflow-y:auto; }
+  .order-summary .line { display:flex; justify-content:space-between; padding:4px 0; }
+  .order-summary .line.total { font-weight:700; border-top:1px solid var(--line); margin-top:8px; padding-top:10px; font-family:'Fraunces',serif; font-size:1.05rem; }
+
+  .field { margin-bottom:16px; }
+  .field label { display:block; font-size:0.85rem; font-weight:700; margin-bottom:6px; }
+  .field input, .field select {
+    width:100%; padding:13px 14px; border:1.5px solid var(--line); border-radius:10px;
+    font-size:1rem; font-family:'Karla',sans-serif; background:#fff;
+  }
+  .field input:focus, .field select:focus { outline:none; border-color:var(--gold-dark); }
+  .field-error { font-size:0.78rem; color:#B23B3B; margin-top:4px; display:none; }
+  .field.error input, .field.error select { border-color:#B23B3B; }
+  .field.error .field-error { display:block; }
+
+  .submit-btn {
+    width:100%; padding:16px; background:var(--green); color:#fff; border:none; border-radius:12px;
+    font-weight:700; font-size:1.02rem; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px; margin-top:8px;
+  }
+  .close-btn {
+    position:absolute; top:18px; right:18px; background:var(--cream); border:none;
+    width:34px; height:34px; border-radius:50%; font-size:1.1rem; cursor:pointer;
+  }
+  .note-box { font-size:0.78rem; color:rgba(43,36,32,0.5); margin-top:16px; text-align:center; line-height:1.5; }
+
+
+  /* Accesso Club del Borgo nel checkout */
+  .club-box {
+    border:1.5px solid var(--line); border-radius:14px; padding:16px;
+    margin:0 0 20px; background:var(--cream);
+  }
+  .club-box h3 { font-size:1.05rem; margin-bottom:4px; color:var(--brown); }
+  .club-box p { font-size:.84rem; color:rgba(43,36,32,.62); margin-bottom:12px; }
+  .club-actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .club-btn {
+    flex:1; min-width:135px; padding:11px 12px; border-radius:10px;
+    border:1.5px solid var(--gold-dark); font-family:'Karla',sans-serif;
+    font-weight:700; cursor:pointer; background:#fff; color:var(--brown);
+  }
+  .club-btn.primary { background:var(--gold); border-color:var(--gold); color:#fff; }
+  .club-btn.link { border:none; background:transparent; color:rgba(43,36,32,.55); text-decoration:underline; }
+  .club-form { display:none; margin-top:14px; }
+  .club-form.visible { display:block; }
+  .club-form input {
+    width:100%; padding:12px 13px; border:1.5px solid var(--line); border-radius:9px;
+    font-size:.95rem; font-family:'Karla',sans-serif; margin-bottom:9px; background:#fff;
+  }
+  .club-form input:focus { outline:none; border-color:var(--gold-dark); }
+  .club-form-row { display:flex; gap:8px; }
+  .club-form-row input { flex:1; min-width:0; }
+  .club-check { display:flex; align-items:flex-start; gap:8px; font-size:.78rem; color:rgba(43,36,32,.65); margin:2px 0 10px; }
+  .club-check input { width:auto; margin:2px 0 0; }
+  .club-notice { min-height:18px; font-size:.8rem; font-weight:700; margin-top:8px; }
+  .club-notice.ok { color:#2E6B40; }
+  .club-notice.err { color:#B23B3B; }
+  .club-connected {
+    display:none; align-items:center; justify-content:space-between; gap:12px;
+    background:rgba(74,139,92,.1); border:1.5px solid var(--green); border-radius:12px;
+    padding:13px 14px;
+  }
+  .club-connected.visible { display:flex; }
+  .club-connected strong { color:#2E6B40; }
+  .club-connected small { display:block; color:rgba(43,36,32,.58); margin-top:2px; }
+  .club-connected button { border:none; background:transparent; text-decoration:underline; color:var(--brown); font-weight:700; cursor:pointer; }
+  .club-gateway.hidden { display:none; }
+
+</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="tabs-wrap">
+  <div class="tabs" id="tabsRow"></div>
+</div>
+
+<div class="wrap" id="menuContainer"></div>
+
+<div class="footer-info">
+  * prodotto eventualmente surgelato<br><br>
+  Seguici su <a href="https://www.instagram.com/lapiadinadelborgo" target="_blank">Instagram</a><br><br>
+  Via Romea 2760, Borgo Paglia — Cesena (FC) · <a href="tel:+393495546093">349 5546093</a>
+</div>
+
+<a href="#" class="admin-toggle-link" id="adminToggleLink">Gestione disponibilità prodotti</a>
+
+<!-- Pannello Admin -->
+<div class="admin-overlay" id="adminOverlay">
+  <div class="admin-sheet">
+    <button class="admin-close" id="adminClose">✕</button>
+    <h2>Gestione disponibilità</h2>
+
+    <div id="adminGate">
+      <div class="admin-sub">Area riservata. Inserisci il codice di accesso.</div>
+      <input type="password" inputmode="numeric" id="adminCodeInput" class="admin-code-input" placeholder="Codice">
+      <div class="admin-code-error" id="adminCodeError" style="display:none;">Codice non corretto</div>
+      <button type="button" class="admin-code-btn" id="adminCodeBtn">Entra</button>
+    </div>
+
+    <div id="adminContent" style="display:none;">
+      <div class="admin-tabs">
+        <button type="button" class="admin-tab-btn active" data-tab="prodotti">Prodotti</button>
+        <button type="button" class="admin-tab-btn" data-tab="ingredienti">Ingredienti</button>
+        <button type="button" class="admin-tab-btn" data-tab="orari">Orari</button>
+      </div>
+      <div class="admin-sub">Le modifiche vengono salvate online: le vedono anche i clienti che ordinano.</div>
+      <div class="admin-sync" id="adminSyncStatus"></div>
+      <button type="button" class="admin-save-btn" id="adminSaveBtn">💾 Salva le modifiche</button>
+      <div id="adminList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Popup proposte aggiuntive -->
+<div class="config-overlay" id="upsellOverlay" style="z-index:250;">
+  <div class="config-sheet">
+    <button class="config-close" id="upsellClose">✕</button>
+    <h2>Non vuoi aggiungere anche…</h2>
+    <div class="config-sub">Qualcosa da bere o un dolce per completare l'ordine</div>
+    <div id="upsellDrinks"></div>
+    <div id="upsellSweets"></div>
+    <button type="button" class="config-confirm-btn" id="upsellContinue">Continua con l'ordine</button>
+  </div>
+</div>
+
+<!-- Modale sostituzione ingrediente finito -->
+<div class="config-overlay" id="substOverlay" style="z-index:300;">
+  <div class="config-sheet">
+    <button class="config-close" id="substClose">✕</button>
+    <h2 id="substTitle">Ingrediente finito</h2>
+    <div class="config-sub" id="substSub"></div>
+    <button type="button" class="subst-skip-btn" id="substSkipBtn">Prendilo lo stesso senza questo ingrediente</button>
+    <div class="subst-or">oppure sostituisci con:</div>
+    <input type="text" class="config-search" id="substSearch" placeholder="🔍 Cerca ingrediente...">
+    <div id="substList"></div>
+  </div>
+</div>
+
+<!-- Modale Configuratore Ingredienti -->
+<div class="config-overlay" id="configOverlay">
+  <div class="config-sheet">
+    <button class="config-close" id="configClose">✕</button>
+    <h2 id="configTitle">Componi il tuo prodotto</h2>
+    <div class="config-sub" id="configSub"></div>
+    <div class="config-max-note" id="configMaxNote" style="display:none;"></div>
+
+    <div class="config-base-price">
+      <span>Prezzo base</span>
+      <span id="configBasePrice">€ 0,00</span>
+    </div>
+
+    <div class="config-impasto-row" id="configImpastoRow" style="display:none;">
+      <select id="configImpastoSelect">
+        <option value="Semplice">Impasto semplice</option>
+        <option value="Integrale">Impasto integrale (+€0,50)</option>
+        <option value="Integrale + Semi">Impasto integrale + semi (+€1,00)</option>
+      </select>
+    </div>
+
+    <div class="config-recognized" id="configRecognized" style="display:none;"></div>
+
+
+    <input type="text" class="config-search" id="configSearch" placeholder="🔍 Cerca ingrediente...">
+    <div class="config-alpha-bar" id="configAlphaBar"></div>
+    <div id="configIngList"></div>
+
+    <div class="config-total-bar">
+      <span class="config-total-label">Totale prodotto</span>
+      <span class="config-total-value" id="configTotal">€ 0,00</span>
+    </div>
+    <button type="button" class="config-confirm-btn" id="configConfirmBtn">Aggiungi al carrello</button>
+  </div>
+</div>
+
+<!-- Cart bar -->
+<div class="cart-bar" id="cartBar">
+  <div>
+    <div class="info" id="cartInfo">0 prodotti</div>
+    <div class="total" id="cartTotal">€ 0,00</div>
+  </div>
+  <button id="openCheckout">Vai all'ordine</button>
+</div>
+
+<!-- Modale -->
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <button class="close-btn" id="closeSheet">✕</button>
+    <h2>Completa l'ordine</h2>
+    <div class="sheet-sub">Ti confermiamo tutto su WhatsApp</div>
+
+    <div class="order-summary" id="orderSummary"></div>
+
+
+
+    <div class="club-box" id="clubBox">
+      <div class="club-gateway" id="clubGateway">
+        <h3>Club del Borgo</h3>
+        <p>Accedi o crea la tessera per collegare questo ordine al tuo profilo. Puoi anche ordinare senza tessera.</p>
+        <div class="club-actions" id="clubChoiceActions">
+          <button type="button" class="club-btn primary" id="clubShowLogin">Accedi al Club</button>
+          <button type="button" class="club-btn" id="clubShowSignup">Crea la tessera</button>
+          <button type="button" class="club-btn link" id="clubContinueGuest">Continua senza tessera</button>
+        </div>
+
+        <div class="club-form" id="clubLoginForm">
+          <input type="text" id="clubLoginIdentifier" autocomplete="username" placeholder="Telefono o e-mail">
+          <input type="password" id="clubLoginPin" inputmode="numeric" maxlength="4" autocomplete="current-password" placeholder="PIN di 4 cifre">
+          <button type="button" class="club-btn primary" id="clubLoginBtn" style="width:100%">Accedi e collega l’ordine</button>
+          <button type="button" class="club-btn link" data-club-back style="width:100%">Indietro</button>
+          <div class="club-notice" id="clubLoginNotice"></div>
+        </div>
+
+        <div class="club-form" id="clubSignupForm">
+          <input type="text" id="clubSignupName" autocomplete="name" placeholder="Nome e cognome">
+          <input type="tel" id="clubSignupPhone" autocomplete="tel" placeholder="Numero di telefono">
+          <input type="email" id="clubSignupEmail" autocomplete="email" placeholder="E-mail">
+          <input type="password" id="clubSignupPin" inputmode="numeric" maxlength="4" autocomplete="new-password" placeholder="Scegli un PIN di 4 cifre">
+          <label class="club-check"><input type="checkbox" id="clubSignupConsent"> <span>Accetto privacy e regolamento del Club del Borgo.</span></label>
+          <button type="button" class="club-btn primary" id="clubSignupBtn" style="width:100%">Crea la tessera</button>
+          <button type="button" class="club-btn link" data-club-back style="width:100%">Indietro</button>
+          <div class="club-notice" id="clubSignupNotice"></div>
+        </div>
+      </div>
+
+      <div class="club-connected" id="clubConnected">
+        <div><strong id="clubConnectedName">Ordine collegato</strong><small id="clubConnectedPoints"></small></div>
+        <button type="button" id="clubLogoutBtn">Esci</button>
+      </div>
+    </div>
+
+    <form id="checkoutForm">
+      <div class="field" id="field-nome">
+        <label for="nome">Nome e cognome</label>
+        <input type="text" id="nome" placeholder="Es. Marco Rossi">
+        <div class="field-error">Inserisci il tuo nome</div>
+      </div>
+      <div class="field" id="field-telefono">
+        <label for="telefono">Numero di telefono</label>
+        <input type="tel" id="telefono" placeholder="Es. 333 1234567">
+        <div class="field-error">Inserisci un numero di telefono</div>
+      </div>
+      <div class="field" id="field-email">
+        <label for="email">Email (facoltativa)</label>
+        <input type="email" id="email" placeholder="Es. marco@email.it">
+        <div class="field-error">Inserisci un'email valida</div>
+      </div>
+      <div class="field" id="field-giorno">
+        <label for="giorno">Giorno di ritiro</label>
+        <select id="giorno"></select>
+        <div class="field-error">Scegli un giorno</div>
+      </div>
+      <div class="field" id="field-orario">
+        <label for="orario">Orario di ritiro</label>
+        <select id="orario"></select>
+        <div class="field-error">Scegli un orario di ritiro</div>
+      </div>
+      <div class="field">
+        <label for="note">Note (allergie, richieste particolari)</label>
+        <input type="text" id="note" placeholder="Facoltativo">
+      </div>
+      <button type="submit" class="submit-btn">📲 Invia ordine su WhatsApp</button>
+    </form>
+
+    <div class="note-box">
+      Premendo il tasto si aprirà WhatsApp con l'ordine già scritto: dovrai solo premere "invia". Vi risponderemo con la conferma dell'orario.
+    </div>
+  </div>
+</div>
+
+<script>
+const WHATSAPP_NUMBER = "393495546093";
+
+// ---------- CLUB DEL BORGO: ACCESSO DAL CHECKOUT ----------
+const CLUB_SUPABASE_URL = "https://tvkgqjcqkuznhyibmbxa.supabase.co";
+const CLUB_SUPABASE_KEY = "sb_publishable_WgQnBhhG-KzZRlhMkll9pQ_4URygKjy";
+const clubDb = window.supabase ? window.supabase.createClient(CLUB_SUPABASE_URL, CLUB_SUPABASE_KEY) : null;
+let clubProfile = null;
+let clubGuestMode = false;
+const clubDigits = v => String(v || "").replace(/\D/g, "");
+const clubNorm = v => String(v || "").trim().toLowerCase();
+const clubPassword = pin => "ClubDelBorgo#" + pin;
+
+function clubNotice(id, message, ok) {
+  const el = document.getElementById(id);
+  el.textContent = message || "";
+  el.className = "club-notice" + (message ? (ok ? " ok" : " err") : "");
+}
+
+function clubShow(view) {
+  document.getElementById("clubChoiceActions").style.display = view === "choice" ? "flex" : "none";
+  document.getElementById("clubLoginForm").classList.toggle("visible", view === "login");
+  document.getElementById("clubSignupForm").classList.toggle("visible", view === "signup");
+  clubNotice("clubLoginNotice", "", false);
+  clubNotice("clubSignupNotice", "", false);
+}
+
+function fillCheckoutFromClub(profile) {
+  if (!profile) return;
+  document.getElementById("nome").value = profile.full_name || "";
+  document.getElementById("telefono").value = profile.phone || "";
+  document.getElementById("email").value = profile.email || "";
+}
+
+function renderClubState() {
+  const gateway = document.getElementById("clubGateway");
+  const connected = document.getElementById("clubConnected");
+  if (clubProfile) {
+    gateway.classList.add("hidden");
+    connected.classList.add("visible");
+    document.getElementById("clubConnectedName").textContent = "Ordine collegato a " + (clubProfile.full_name || "cliente");
+    document.getElementById("clubConnectedPoints").textContent = (Number(clubProfile.points) || 0) + " punti disponibili";
+    fillCheckoutFromClub(clubProfile);
+  } else {
+    connected.classList.remove("visible");
+    gateway.classList.toggle("hidden", clubGuestMode);
+    clubShow("choice");
+  }
+}
+
+async function loadClubProfile() {
+  if (!clubDb) return null;
+  const { data: { session } } = await clubDb.auth.getSession();
+  if (!session) {
+    clubProfile = null;
+    renderClubState();
+    return null;
+  }
+  const { data, error } = await clubDb.from("profiles").select("*").eq("id", session.user.id).single();
+  if (error) {
+    console.error("Errore profilo Club:", error);
+    clubProfile = null;
+  } else {
+    clubProfile = data;
+    clubGuestMode = false;
+  }
+  renderClubState();
+  return clubProfile;
+}
+
+async function clubLogin() {
+  if (!clubDb) return clubNotice("clubLoginNotice", "Connessione al Club non disponibile.", false);
+  let identifier = clubNorm(document.getElementById("clubLoginIdentifier").value);
+  const pin = document.getElementById("clubLoginPin").value.trim();
+  if (!/^\d{4}$/.test(pin)) return clubNotice("clubLoginNotice", "Inserisci un PIN di 4 cifre.", false);
+  let email = identifier;
+  if (!identifier.includes("@")) {
+    const { data, error } = await clubDb.rpc("resolve_login_email", { p_phone: clubDigits(identifier) });
+    if (error || !data) return clubNotice("clubLoginNotice", "Tessera non trovata.", false);
+    email = data;
+  }
+  clubNotice("clubLoginNotice", "Accesso in corso…", true);
+  const { error } = await clubDb.auth.signInWithPassword({ email, password: clubPassword(pin) });
+  if (error) return clubNotice("clubLoginNotice", "Telefono/e-mail o PIN non corretti.", false);
+  await loadClubProfile();
+}
+
+async function clubSignup() {
+  if (!clubDb) return clubNotice("clubSignupNotice", "Connessione al Club non disponibile.", false);
+  const full_name = document.getElementById("clubSignupName").value.trim();
+  const phone = clubDigits(document.getElementById("clubSignupPhone").value);
+  const email = clubNorm(document.getElementById("clubSignupEmail").value);
+  const pin = document.getElementById("clubSignupPin").value.trim();
+  if (!full_name) return clubNotice("clubSignupNotice", "Inserisci nome e cognome.", false);
+  if (phone.length < 9) return clubNotice("clubSignupNotice", "Numero di telefono non valido.", false);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return clubNotice("clubSignupNotice", "E-mail non valida.", false);
+  if (!/^\d{4}$/.test(pin)) return clubNotice("clubSignupNotice", "Il PIN deve avere 4 cifre.", false);
+  if (!document.getElementById("clubSignupConsent").checked) return clubNotice("clubSignupNotice", "Accetta privacy e regolamento.", false);
+  clubNotice("clubSignupNotice", "Creazione tessera in corso…", true);
+  const { data, error } = await clubDb.auth.signUp({
+    email,
+    password: clubPassword(pin),
+    options: { data: { full_name, phone, email, privacy_accepted: true, rules_accepted: true } }
+  });
+  if (error) return clubNotice("clubSignupNotice", error.message, false);
+  if (!data.session) return clubNotice("clubSignupNotice", "Tessera creata. Conferma l’e-mail e poi accedi.", true);
+  await loadClubProfile();
+}
+
+function setupClubCheckout() {
+  document.getElementById("clubShowLogin").addEventListener("click", () => clubShow("login"));
+  document.getElementById("clubShowSignup").addEventListener("click", () => clubShow("signup"));
+  document.querySelectorAll("[data-club-back]").forEach(btn => btn.addEventListener("click", () => clubShow("choice")));
+  document.getElementById("clubContinueGuest").addEventListener("click", () => {
+    clubGuestMode = true;
+    renderClubState();
+  });
+  document.getElementById("clubLoginBtn").addEventListener("click", clubLogin);
+  document.getElementById("clubSignupBtn").addEventListener("click", clubSignup);
+  document.getElementById("clubLogoutBtn").addEventListener("click", async () => {
+    if (clubDb) await clubDb.auth.signOut();
+    clubProfile = null;
+    clubGuestMode = false;
+    renderClubState();
+  });
+  loadClubProfile();
+}
+
+
+// ---------- DATI MENU ----------
+const MENU = {
+  "Piadine": {
+    items: [
+      { name: "Semplice", price: 1.20 },
+      { name: "Integrale", price: 1.50 },
+      { name: "Integrale + Semi", price: 1.80 },
+      { name: "Prosciutto crudo", price: 4.50 },
+      { name: "Prosciutto cotto", price: 4.50 },
+      { name: "Speck", price: 4.50 },
+      { name: "Salame", price: 4.50 },
+      { name: "Mortadella", price: 4.50 },
+      { name: "Pancetta", price: 4.50 },
+      { name: "Salsiccia", price: 6.00 },
+      { name: "Salsiccia + Cipolla", price: 7.00 },
+      { name: "Squacquerone + Rucola", price: 5.00 },
+      { name: "Porchetta", price: 7.00 },
+      { name: "Formaggi", price: 5.00 },
+      { name: "Nutella", price: 3.50 }
+    ],
+    note: { title: "Tessera fedeltà", text: "10 piadine = 1 omaggio · 5 integrali = 1 omaggio" }
+  },
+  "Speciali": {
+    desc: "Le nostre piadine speciali con farciture ricercate",
+    items: [
+      { name: "Piadina Mexicana", desc: "fontina, salame piccante, salsa piccante", price: 6.00 },
+      { name: "Piadina Estate", desc: "maionese, tonno, pomodoro, rucola", price: 6.00 },
+      { name: "Piadina Vegetariana", desc: "brie sciolto, melanzane, zucchine grigliate", price: 8.00 },
+      { name: "Piadina Delizia", desc: "bresaola, scaglie di grana, rucola", price: 8.00 },
+      { name: "Piadina 30 (integrale)", desc: "brie, radicchio, rucola, semi di sesamo", price: 8.00 },
+      { name: "Piadina 34", desc: "pancetta arrotolata, zucchine grigliate, scaglie di grana, gocce di aceto balsamico", price: 8.00 },
+      { name: "Piadina 21", desc: "alici marinate, cipolla fresca, rucola", price: 8.00 }
+    ]
+  },
+  "Pollo & Vitello": {
+    desc: "Le nostre piadine farcite con pollo e il rotolo al vitello tonnato.",
+    items: [
+      { name: "Pollo & Tartara", desc: "fesa di pollo, salsa tartara, pomodoro, insalata", price: 8.50 },
+      { name: "Pollo, Fontina & Mayo", desc: "fesa di pollo, maionese, fontina, pomodoro, insalata", price: 8.50 },
+      { name: "Pollo Caesar", desc: "fesa di pollo, salsa Caesar cremosa, pomodoro, insalata", price: 8.50 },
+      { name: "Rotolo Vitel Tonnè", desc: "sottofesa di vitello, capperi, salsa tonnata (cremosa e delicata)", price: 9.00 }
+    ]
+  },
+  "Crescioni": {
+    desc: "Ripieni e chiusi, cotti in piastra",
+    items: [
+      { name: "Erbe", price: 4.00 },
+      { name: "Erbe, squacquerone, salame piccante", price: 5.00 },
+      { name: "Pomodoro, mozzarella", price: 4.00 },
+      { name: "Zucca, patate", price: 4.00 },
+      { name: "Mozzarella, prosciutto cotto, funghi, fontina", price: 6.00 },
+      { name: "Patate, salsiccia", price: 5.00 },
+      { name: "4 formaggi", price: 6.00 },
+      { name: "Diavola", desc: "pomodoro, mozzarella, salame piccante", price: 4.50 },
+      { name: "Fricot", desc: "verdure", price: 5.00 },
+      { name: "Mozzarella, speck, gorgonzola, radicchio", price: 6.00 },
+      { name: "Mozzarella, porcini, taleggio, radicchio", price: 6.00 },
+      { name: "Mozzarella, fontina, crudo, porcini", price: 6.00 },
+      { name: "Cipolla*, salsiccia", price: 5.00 },
+      { name: "Mozzarella, speck, melanzane, scamorza", price: 6.00 },
+      { name: "Bomba", desc: "mozzarella, funghi freschi, pancetta, radicchio", price: 6.00 },
+      { name: "Zingara", desc: "pomodoro, mozzarella, olive, funghi, p. cotto", price: 6.00 },
+      { name: "Napoli", desc: "pomodoro, mozzarella, acciughe, capperi", price: 6.00 },
+      { name: "Caprese", desc: "mozzarella, pomodoro fresco, olive, grana, origano", price: 6.00 },
+      { name: "Contadino", desc: "patate, cipolla, pancetta toscana", price: 6.00 },
+      { name: "Buongustaio", desc: "mozzarella, ciuffetti di mascarpone, zucchine grigliate, prosciutto cotto", price: 6.00 },
+      { name: "Cipolla caramellata, pancetta arrotolata, mozzarella", price: 6.00 },
+      { name: "Gorgonzola, pera a fettine, noci", price: 6.00 },
+      { name: "Zucca, mozzarella, gorgonzola, noci, salsa tartufata", price: 7.00 },
+      { name: "Mozzarella, burrata, friarielli, salsiccia", price: 7.00 }
+    ],
+    addons: { title: "Aggiunte e varianti", items: [
+      { name: "Aggiunta 1 ingrediente", price: 0.50 },
+      { name: "Tonno, porcini, tartufo o crudo", price: 1.00 },
+      { name: "Burrata", price: 1.00 },
+      { name: "Impasto integrale", price: 0.50 }
+    ]}
+  },
+  "Crescioni Novità": {
+    desc: "Le nostre proposte più recenti, con ingredienti speciali.",
+    items: [
+      { name: "Carbonara", desc: "pomodoro, mozzarella, salsa carbonara, bacon croccante", price: 6.00 },
+      { name: "Parmigiana", desc: "pomodoro, salsa Gran Crema Parmigiano, melanzane", price: 6.00 },
+      { name: "Ragusano", desc: "mozzarella, zucchine grigliate, prosciutto cotto, ragusano", price: 6.00 },
+      { name: "Ragusano Rosso", desc: "pomodoro, ragusano, salame piccante", price: 6.00 }
+    ]
+  },
+  "Crescioni Dolci": {
+    items: [
+      { name: "Nutella", price: 4.00 },
+      { name: "Nutella, cocco", price: 4.50 },
+      { name: "Nutella, nocciole", price: 4.50 },
+      { name: "Nutella, mascarpone, nocciole", price: 5.00 }
+    ]
+  },
+  "Rotoli": {
+    items: [
+      { name: "Giove", desc: "mozzarella, pancetta toscana, rucola", price: 6.00 },
+      { name: "Nettuno", desc: "mozzarella, prosciutto cotto, funghi", price: 6.00 },
+      { name: "Estate", desc: "mozzarella, salsiccia, salame piccante", price: 7.00 },
+      { name: "Plutone", desc: "mozzarella, prosciutto cotto, melanzane", price: 7.00 },
+      { name: "Saturno", desc: "squacquerone, prosciutto crudo, rucola", price: 7.00 },
+      { name: "Borgo", desc: "Nutella, mascarpone, nocciole", price: 7.00 },
+      { name: "Boscaiolo", desc: "mozzarella, speck, porcini", price: 7.00 },
+      { name: "Gonzales", desc: "maionese, salsa piccante, ketchup, p. cotto, insalata", price: 7.00 },
+      { name: "Urano", desc: "erbe, squacquerone, salame piccante", price: 7.00 },
+      { name: "Mercurio", desc: "mozzarella, porcini, taleggio, radicchio", price: 8.00 },
+      { name: "Gustoso", desc: "mozzarella, speck, melanzane, scamorza", price: 8.00 },
+      { name: "Vegetariano", desc: "mozzarella, funghi freschi, rucola, pomodoro", price: 7.00 },
+      { name: "Primavera", desc: "mozzarella, prosciutto crudo, pomodoro, rucola", price: 8.00 },
+      { name: "Sfizioso", desc: "mozzarella, gorgonzola, speck, radicchio", price: 8.00 },
+      { name: "Delicato", desc: "mozzarella, prosciutto cotto, carciofi, fontina", price: 8.00 },
+      { name: "Ortolano", desc: "mozzarella, verdure grigliate*, fontina", price: 8.00 },
+      { name: "Rustico", desc: "mozzarella, fontina, porchetta, insalata, pomodoro", price: 8.00 },
+      { name: "Caprese", desc: "mozzarella, pomodoro fresco, olive, grana, origano", price: 7.00 },
+      { name: "Olimpo", desc: "fontina, crema tartufata, salame piccante", price: 8.00 },
+      { name: "Capri", desc: "mozzarella, pomodori secchi, melanzane, salame piccante", price: 8.00 },
+      { name: "Amalfi", desc: "mozzarella, speck, gorgonzola, noci", price: 8.00 },
+      { name: "Taratatà", desc: "salsa tartara, prosciutto cotto, funghi freschi, insalata", price: 7.00 },
+      { name: "Marte", desc: "maionese, tonno, pomodoro, cipolline, rucola", price: 8.00 },
+      { name: "Zingara", desc: "pomodoro, mozzarella, prosciutto cotto, olive nere, funghi freschi", price: 8.00 },
+      { name: "Venere", desc: "maionese, prosciutto cotto, insalata capricciosa, insalata verde", price: 7.00 },
+      { name: "Tonnè", desc: "salsa tonnata, prosciutto cotto, capperi", price: 8.00 },
+      { name: "Kebab", desc: "salsa yogurt, salsa piccante, kebab*, insalata, pomodori", price: 8.00 },
+      { name: "Rotolo 28", desc: "pulled pork (carne di suino), insalata, cipolla caramellata, salsa barbecue", price: 8.00 },
+      { name: "Rotolo 29", desc: "speck, funghi freschi, salsa boscaiola", price: 7.00 },
+      { name: "Rotolo 36", desc: "tonno, insalata, radicchio, cipolla fresca, rucola, pomodori", price: 8.00 },
+      { name: "Rotolo 42", desc: "brie, speck, champignon, fettine di mele", price: 8.00 },
+      { name: "Rotolo 43", desc: "gorgonzola, pancetta croccante, semi di sesamo, radicchio alla griglia, aceto balsamico", price: 8.00 }
+    ]
+  },
+  "Piadina Pizza": {
+    items: [
+      { name: "Pomodoro e mozzarella", price: 6.00 },
+      { name: "Pomodoro e mozzarella + 1 o 2 ingredienti", price: 7.00, needsConfig: true, maxIngredients: 2, includedIngredients: ["pomodoro", "mozzarella"] },
+      { name: "Superfarcita", price: 8.00 },
+      { name: "Mozzarella + 1 o 2 ingredienti", price: 7.00, needsConfig: true, maxIngredients: 2, includedIngredients: ["mozzarella"] },
+      { name: "Aurora Piadipizza", desc: "base piadina molto sottile, salsa pomodoro, squacquerone, insalata, pomodori, grana, rucola", price: 9.00 },
+      { name: "Autunno Piadipizza", desc: "pomodoro, mozzarella, gorgonzola, zucca*, pancetta", price: 9.00 }
+    ]
+  },
+  "Crostoni": {
+    items: [
+      { name: "Pomodoro e mozzarella", price: 5.00 },
+      { name: "Pomodoro e mozzarella + 1 o 2 ingredienti", price: 6.00, needsConfig: true, maxIngredients: 2, includedIngredients: ["pomodoro", "mozzarella"] },
+      { name: "Superfarciti", price: 7.00 },
+      { name: "Mozzarella + 1 o 2 ingredienti", price: 7.00, needsConfig: true, maxIngredients: 2, includedIngredients: ["mozzarella"] }
+    ]
+  },
+  "Taglieri": {
+    desc: "I nostri taglieri da condividere — tradizione romagnola e novità toscana.",
+    items: [
+      { name: "Tagliere Romagnolo", desc: "1 raviolo, squacquerone, pecorino, fontina, giardiniera, carciofini romani, mix di salumi romagnoli. Disponibile tutto l'anno.", price: 12.00, unit: "a persona" },
+      { name: "Crostini Toscani", desc: "Crostini caldi misti — il tocco perfetto per l'aperitivo o la cena.", price: 12.00, unit: "min. 2 persone" },
+      { name: "Batilarda Toscana", desc: "Salumi toscani: prosciutto toscano, mortadella con cinghiale e tartufo, rigatino (pancetta), lardo alle erbe, lombo di suino brado, salsiccia di suino e cinghiale. Formaggi: pecorino, squacquerone. In più: piadina romagnola, crescione romagnolo, giardiniera, carciofini.", price: 32.00, unit: "min. 2 persone" }
+    ],
+    note: { title: "Opzione aperitivo", text: "Aggiungi un calice di vino al tuo tagliere — +4,00 € a calice. Per prenotare chiama, scrivi su Instagram o WhatsApp al +39 349 5546093" }
+  },
+  "Altro": {
+    items: [
+      { name: "Carasao integrale", price: 5.00 },
+      { name: "Carasao", price: 4.00 },
+      { name: "Hot Dog (con piadina)", price: 5.00 },
+      { name: "Ravioli", desc: "piccoli ravioli a forma di crescione, prezzo al pezzo", price: 1.30 },
+      { name: "Mini rotoli", priceLabel: "prezzo intero − 0,50" },
+      { name: "Mini crescioni", priceLabel: "metà prezzo + 0,20" }
+    ]
+  },
+  "Le Birre": {
+    items: [
+      { name: "Ceres", unit2: "33cl", price: 4.00 },
+      { name: "Moretti", unit2: "33cl", price: 3.50 },
+      { name: "Moretti lattina", unit2: "33cl", price: 3.00 },
+      { name: "Beck's", unit2: "33cl", price: 3.50 },
+      { name: "Ichnusa", unit2: "33cl", price: 3.50 },
+      { name: "Ichnusa non filtrata", unit2: "33cl", price: 4.00 },
+      { name: "Ichnusa", unit2: "50cl", price: 4.50 },
+      { name: "Nenebrea", unit2: "66cl", price: 4.50 },
+      { name: "Moretti", unit2: "66cl", price: 4.50 },
+      { name: "Beck's", unit2: "60cl", price: 4.50 },
+      { name: "Heineken", unit2: "66cl", price: 4.50 },
+      { name: "Moretti Filtrata a Freddo", unit2: "55cl", price: 4.50 }
+    ]
+  },
+  "I Vini": {
+    desc: "La nostra selezione di vini rossi e bianchi, in bottiglia, mezza bottiglia o al calice.",
+    subgroups: [
+      { title: "Vini Rossi", items: [
+        { name: "Tenuta Amalia Sangiovese Superiore \"Barone\"", unit: "75cl", price: 8.50 },
+        { name: "Tenuta Amalia Sangiovese Superiore \"Barone\"", unit: "375ml", price: 5.00 },
+        { name: "Riserva Sangiovese Bio Superiore \"Remember\"", unit: "75cl", price: 18.00 },
+        { name: "Sangiovese \"Cipressi\" di Felsina", unit: "75cl Toscana", price: 10.00 },
+        { name: "Calice di Sangiovese IGT Bio", unit: "al calice", price: 5.00 }
+      ]},
+      { title: "Vini Bianchi", items: [
+        { name: "Trebbiano Spumante Brut", unit: "75cl", price: 13.50 },
+        { name: "Chardonnay Frizzante IGT Tenuta Amalia", unit: "75cl", price: 8.50 },
+        { name: "Trebbiano DOC Tenuta Amalia", unit: "75cl", price: 8.50 },
+        { name: "Trebbiano DOC Tenuta Amalia", unit: "375ml", price: 5.00 },
+        { name: "Albana DOCG Secco", unit: "75cl · Cantina Sociale", price: 9.00 },
+        { name: "Albana Dolce \"Donna Sandra\"", unit: "75cl", price: 8.50 },
+        { name: "Calice Trebbiano DOC", unit: "al calice", price: 5.00 }
+      ]}
+    ]
+  },
+  "Le Bibite": {
+    items: [
+      { name: "Acqua", unit2: "0,5L", price: 1.00 },
+      { name: "Acqua", unit2: "1L", price: 2.00 },
+      { name: "Coca Cola", price: 3.00 },
+      { name: "Fanta", price: 3.00 },
+      { name: "Sprite", price: 3.00 },
+      { name: "Lemonsoda", price: 3.00 },
+      { name: "Thé", price: 3.00 },
+      { name: "Coca Cola bottiglia", unit2: "66cl", price: 3.50 },
+      { name: "Coca", unit2: "1 litro", price: 4.00 },
+      { name: "Coca", unit2: "1½ litro", price: 4.50 },
+      { name: "Acqua tonica", price: 2.50 },
+      { name: "Estathé piccolo", price: 2.00 },
+      { name: "Thé bottiglia", unit2: "50cl", price: 3.00 },
+      { name: "Chinotto", unit2: "33cl", price: 3.00 }
+    ]
+  }
+};
+
+const cart = {}; // id -> {name, price, qty}
+let itemCounter = 0;
+
+function formatPrice(n) {
+  return "€ " + n.toFixed(2).replace(".", ",");
+}
+
+function buildTabs() {
+  const tabsRow = document.getElementById("tabsRow");
+  Object.keys(MENU).forEach((cat, i) => {
+    const btn = document.createElement("button");
+    btn.className = "tab" + (i === 0 ? " active" : "");
+    btn.textContent = cat;
+    btn.dataset.cat = cat;
+    btn.addEventListener("click", () => showCategory(cat));
+    tabsRow.appendChild(btn);
+  });
+}
+
+function slugify(str) {
+  return str.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+}
+
+function makeItemRow(item, hasQty, categoria) {
+  itemCounter++;
+  const stableId = "avail_" + slugify(categoria || "") + "_" + slugify(item.name) + (item.unit2 ? "_" + slugify(item.unit2) : "");
+  const id = "item" + itemCounter;
+  const price = item.price;
+  const row = document.createElement("div");
+  row.className = "item";
+  row.dataset.stableId = stableId;
+  if (item.desc) {
+    const NORM_MENU = { 'funghi':'funghi freschi', 'p. cotto':'prosciutto cotto', 'salsa tonnata (cremosa e delicata)':'salsa tonnata', 'verdure grigliate':'verdure', 'fesa di pollo':'fesa di petto di pollo fresco', 'sottofesa di vitello':'sottofesa di vitello fresca', 'pomodori':'pomodoro fresco', 'pomodoro':'pomodoro fresco', 'olive':'olive nere', 'porcini':'funghi porcini', 'brie sciolto':'brie', 'gocce di aceto balsamico':'aceto balsamico', 'scaglie di grana':'grana', 'ciuffetti di mascarpone':'mascarpone', 'insalata verde':'insalata', 'pulled pork (carne di suino)':'pulled pork', 'salsa pomodoro':'salsa di pomodoro' };
+    const ings = item.desc.split(",").map(s => {
+      let x = s.trim().toLowerCase().replace(/\*/g,"").replace(/"/g,"");
+      return NORM_MENU[x] || x;
+    }).filter(Boolean);
+    row.dataset.ingredients = ings.join("|");
+  }
+
+  const fotoFile = "foto/" + slugify(categoria || "") + "_" + slugify(item.name) + ".jpg";
+  let leftHtml = `<div class="item-name">${item.name}`;
+  if (item.unit2) leftHtml += ` <span class="item-unit">${item.unit2}</span>`;
+  leftHtml += `</div>`;
+  if (item.desc) leftHtml += `<div class="item-desc">${item.desc}</div>`;
+  leftHtml += `<div class="item-unavailable-tag">Non disponibile</div>`;
+
+  const showConfigBtn = item.needsConfig && hasQty && !item.priceLabel;
+
+  row.innerHTML = `
+    <img class="item-photo" src="${fotoFile}" alt="" loading="lazy" onerror="this.remove()">
+    <div class="item-left">${leftHtml}</div>
+    <div class="item-right">
+      ${item.priceLabel ? `<div class="item-sub-price">${item.priceLabel}</div>` : `<div class="item-price">${formatPrice(price)}</div>`}
+      ${item.unit ? `<div class="item-sub-price">${item.unit}</div>` : ""}
+      ${showConfigBtn ? `
+      <button type="button" class="item-config-btn">Scegli ingredienti</button>
+      ` : hasQty && !item.priceLabel ? `
+      <div class="qty-control" data-id="${id}">
+        <button class="qty-btn minus">−</button>
+        <span class="qty-val">0</span>
+        <button class="qty-btn plus">+</button>
+      </div>` : ""}
+    </div>
+  `;
+
+  if (showConfigBtn) {
+    row.querySelector(".item-config-btn").addEventListener("click", () => {
+      if (row.classList.contains("unavailable")) return;
+      const categoriaVisualizzata = (categoria === "Speciali" || categoria === "Pollo & Vitello") ? "Piadine" : categoria;
+      openFixedConfigurator(item, categoriaVisualizzata, row);
+    });
+  } else if (hasQty && !item.priceLabel) {
+    const qtyControl = row.querySelector(".qty-control");
+    const categoriaVisualizzata = (categoria === "Speciali" || categoria === "Pollo & Vitello") ? "Piadine" : categoria;
+    const fullName = categoriaVisualizzata ? `[${categoriaVisualizzata}] ${item.name}` : item.name;
+    qtyControl.querySelector(".plus").addEventListener("click", () => {
+      if (row.classList.contains("unavailable")) return;
+      if (!cart[id]) cart[id] = { name: fullName, price: price, qty: 0 };
+      cart[id].qty++;
+      qtyControl.querySelector(".qty-val").textContent = cart[id].qty;
+      updateCartBar();
+    });
+    qtyControl.querySelector(".minus").addEventListener("click", () => {
+      if (row.classList.contains("unavailable")) return;
+      if (!cart[id] || cart[id].qty === 0) return;
+      cart[id].qty--;
+      qtyControl.querySelector(".qty-val").textContent = cart[id].qty;
+      updateCartBar();
+    });
+  }
+
+  return row;
+}
+
+function makeCustomBox(type, emoji, basePrice, impastoMode) {
+  const box = document.createElement("div");
+  box.className = "custom-section";
+  box.innerHTML = `
+    <h2>${emoji} Crea il tuo ${type.toLowerCase()} su misura</h2>
+    <div class="sub">Scegli il tuo impasto (se previsto) e gli ingredienti che vuoi aggiungere — il prezzo si calcola in automatico.</div>
+    <div class="custom-item" data-type="${type}" data-base-price="${basePrice}">
+      <button type="button" class="configure-btn">🧾 Componi il tuo ${type.toLowerCase()}</button>
+      <div class="configure-summary">Nessuna composizione ancora fatta</div>
+    </div>
+  `;
+
+  box.querySelector(".configure-btn").addEventListener("click", () => {
+    openConfigurator(type, emoji, basePrice, impastoMode, box.querySelector(".custom-item"));
+  });
+
+  return box;
+}
+
+function buildMenu() {
+  const container = document.getElementById("menuContainer");
+  Object.entries(MENU).forEach(([cat, data], i) => {
+    const section = document.createElement("section");
+    section.className = "cat-section" + (i === 0 ? " active" : "");
+    section.dataset.cat = cat;
+
+    const banner = document.createElement("div");
+    banner.className = "cat-banner";
+    banner.textContent = cat;
+    section.appendChild(banner);
+
+    if (data.desc) {
+      const desc = document.createElement("div");
+      desc.className = "cat-desc";
+      desc.textContent = data.desc;
+      section.appendChild(desc);
+    }
+
+    if (data.subgroups) {
+      data.subgroups.forEach(sub => {
+        const h3 = document.createElement("h3");
+        h3.style.cssText = "font-size:1.2rem;color:#8B5A2E;margin:24px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9A15C;display:inline-block;";
+        h3.textContent = sub.title;
+        section.appendChild(h3);
+        sub.items.forEach(item => section.appendChild(makeItemRow(item, true, cat)));
+      });
+    } else if (data.items) {
+      data.items.forEach(item => section.appendChild(makeItemRow(item, true, cat)));
+    }
+
+    if (data.note) {
+      const noteBox = document.createElement("div");
+      noteBox.className = "cat-desc box";
+      noteBox.innerHTML = `<strong>${data.note.title}</strong><br>${data.note.text}`;
+      section.appendChild(noteBox);
+    }
+
+    if (data.addons) {
+      const addonBox = document.createElement("div");
+      addonBox.className = "cat-desc box";
+      let html = `<strong>${data.addons.title}</strong><br>`;
+      data.addons.items.forEach(a => {
+        html += `${a.name} — ${formatPrice(a.price)}<br>`;
+      });
+      addonBox.innerHTML = html;
+      section.appendChild(addonBox);
+    }
+
+    container.appendChild(section);
+
+    if (cat === "Piadine") {
+      container.appendChild(makeCustomBox("Piadina", "🫓", 4.00, "full"));
+    }
+    if (cat === "Rotoli") {
+      container.appendChild(makeCustomBox("Rotolo", "🌯", 6.00, "basic"));
+    }
+    if (cat === "Crescioni Dolci") {
+      container.appendChild(makeCustomBox("Crescione", "🥟", 4.00, "basic"));
+    }
+    if (cat === "Piadina Pizza") {
+      container.appendChild(makeCustomBox("Piadina Pizza", "🍕", 6.00, "basic"));
+    }
+    if (cat === "Crostoni") {
+      container.appendChild(makeCustomBox("Crostone", "🍞", 5.00, "none"));
+    }
+  });
+
+}
+
+function showCategory(cat) {
+  const section = document.querySelector(`.cat-section[data-cat="${CSS.escape(cat)}"]`);
+  if (section) section.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function setupScrollSpy() {
+  const sections = document.querySelectorAll(".cat-section");
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const cat = entry.target.dataset.cat;
+        document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.cat === cat));
+        const activeTab = document.querySelector(`.tab[data-cat="${CSS.escape(cat)}"]`);
+        if (activeTab) activeTab.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      }
+    });
+  }, { rootMargin: "-80px 0px -70% 0px", threshold: 0 });
+  sections.forEach(s => observer.observe(s));
+}
+
+// ---------- LISTA INGREDIENTI SELEZIONABILI ----------
+const INGREDIENTS_LIST = [{"name": "fesa di petto di pollo fresco", "price": 2.5, "category": "Carne"}, {"name": "kebab", "price": 1.0, "category": "Carne"}, {"name": "porchetta", "price": 0.5, "category": "Carne"}, {"name": "pulled pork", "price": 0.5, "category": "Carne"}, {"name": "salsiccia", "price": 0.5, "category": "Carne"}, {"name": "sottofesa di vitello fresca", "price": 2.5, "category": "Carne"}, {"name": "bacon croccante", "price": 0.5, "category": "Salumi"}, {"name": "bresaola", "price": 0.5, "category": "Salumi"}, {"name": "mortadella", "price": 0.5, "category": "Salumi"}, {"name": "pancetta", "price": 0.5, "category": "Salumi"}, {"name": "pancetta toscana", "price": 0.5, "category": "Salumi"}, {"name": "prosciutto cotto", "price": 0.5, "category": "Salumi"}, {"name": "prosciutto crudo", "price": 1.0, "category": "Salumi"}, {"name": "salame", "price": 0.5, "category": "Salumi"}, {"name": "salame piccante", "price": 0.5, "category": "Salumi"}, {"name": "speck", "price": 0.5, "category": "Salumi"}, {"name": "brie", "price": 0.5, "category": "Formaggi"}, {"name": "burrata", "price": 1.0, "category": "Formaggi"}, {"name": "fontina", "price": 0.5, "category": "Formaggi"}, {"name": "gorgonzola", "price": 0.5, "category": "Formaggi"}, {"name": "grana", "price": 0.5, "category": "Formaggi"}, {"name": "mozzarella", "price": 0.5, "category": "Formaggi"}, {"name": "parmigiano", "price": 0.5, "category": "Formaggi"}, {"name": "pecorino", "price": 0.5, "category": "Formaggi"}, {"name": "ragusano", "price": 0.5, "category": "Formaggi"}, {"name": "scamorza", "price": 0.5, "category": "Formaggi"}, {"name": "squacquerone", "price": 0.5, "category": "Formaggi"}, {"name": "taleggio", "price": 0.5, "category": "Formaggi"}, {"name": "acciughe", "price": 1.0, "category": "Pesce"}, {"name": "alici marinate", "price": 1.0, "category": "Pesce"}, {"name": "salmone", "price": 1.0, "category": "Pesce"}, {"name": "tonno", "price": 1.0, "category": "Pesce"}, {"name": "capperi", "price": 0.5, "category": "Verdure"}, {"name": "carciofi", "price": 0.5, "category": "Verdure"}, {"name": "champignon", "price": 0.5, "category": "Verdure"}, {"name": "cipolla caramellata", "price": 0.5, "category": "Verdure"}, {"name": "cipolla fresca", "price": 0.5, "category": "Verdure"}, {"name": "cipolline", "price": 0.5, "category": "Verdure"}, {"name": "erbe", "price": 0.5, "category": "Verdure"}, {"name": "friarielli", "price": 0.5, "category": "Verdure"}, {"name": "funghi freschi", "price": 0.5, "category": "Verdure"}, {"name": "funghi porcini", "price": 1.0, "category": "Verdure"}, {"name": "funghi trifolati", "price": 0.5, "category": "Verdure"}, {"name": "insalata", "price": 0.5, "category": "Verdure"}, {"name": "melanzane", "price": 0.5, "category": "Verdure"}, {"name": "olive nere", "price": 0.5, "category": "Verdure"}, {"name": "patate", "price": 0.5, "category": "Verdure"}, {"name": "pomodori secchi", "price": 0.5, "category": "Verdure"}, {"name": "pomodoro fresco", "price": 0.5, "category": "Verdure"}, {"name": "radicchio", "price": 0.5, "category": "Verdure"}, {"name": "rucola", "price": 0.5, "category": "Verdure"}, {"name": "verdure", "price": 0.5, "category": "Verdure"}, {"name": "zucchine grigliate", "price": 0.5, "category": "Verdure"}, {"name": "aceto balsamico", "price": 0.5, "category": "Salse e condimenti"}, {"name": "crema tartufata", "price": 1.0, "category": "Salse e condimenti"}, {"name": "ketchup", "price": 0.5, "category": "Salse e condimenti"}, {"name": "maionese", "price": 0.5, "category": "Salse e condimenti"}, {"name": "origano", "price": 0.5, "category": "Salse e condimenti"}, {"name": "salsa barbecue", "price": 0.5, "category": "Salse e condimenti"}, {"name": "salsa boscaiola", "price": 0.5, "category": "Salse e condimenti"}, {"name": "salsa caesar cremosa", "price": 0.5, "category": "Salse e condimenti"}, {"name": "salsa carbonara", "price": 0.5, "category": "Salse e condimenti"}, {"name": "salsa di pomodoro", "price": 0.5, "category": "Salse e condimenti"}, {"name": "salsa gran crema parmigiano", "price": 0.5, "category": "Salse e condimenti"}, {"name": "salsa piccante", "price": 0.5, "category": "Salse e condimenti"}, {"name": "salsa tartara", "price": 0.5, "category": "Salse e condimenti"}, {"name": "salsa tartufata", "price": 1.0, "category": "Salse e condimenti"}, {"name": "salsa tonnata", "price": 0.5, "category": "Salse e condimenti"}, {"name": "salsa yogurt", "price": 0.5, "category": "Salse e condimenti"}, {"name": "cocco", "price": 0.5, "category": "Dolci e frutta"}, {"name": "fettine di mele", "price": 0.5, "category": "Dolci e frutta"}, {"name": "mascarpone", "price": 0.5, "category": "Dolci e frutta"}, {"name": "nocciole", "price": 0.5, "category": "Dolci e frutta"}, {"name": "noci", "price": 0.5, "category": "Dolci e frutta"}, {"name": "nutella", "price": 0.5, "category": "Dolci e frutta"}, {"name": "pera a fettine", "price": 0.5, "category": "Dolci e frutta"}, {"name": "semi di sesamo", "price": 0.5, "category": "Dolci e frutta"}];
+
+// ---------- DATABASE PRODOTTI FISSI (per riconoscimento) ----------
+const FIXED_PRODUCTS_DB = [{"name": "Piadina Mexicana", "category": "Speciali", "price": 6, "ingredients": ["fontina", "salame piccante", "salsa piccante"]}, {"name": "Piadina Estate", "category": "Speciali", "price": 6, "ingredients": ["maionese", "tonno", "pomodoro fresco", "rucola"]}, {"name": "Piadina Vegetariana", "category": "Speciali", "price": 8, "ingredients": ["brie", "melanzane", "zucchine grigliate"]}, {"name": "Piadina Delizia", "category": "Speciali", "price": 8, "ingredients": ["bresaola", "grana", "rucola"]}, {"name": "Piadina 30 (integrale)", "category": "Speciali", "price": 8, "ingredients": ["brie", "radicchio", "rucola", "semi di sesamo"]}, {"name": "Piadina 34", "category": "Speciali", "price": 8, "ingredients": ["pancetta", "zucchine grigliate", "grana", "aceto balsamico"]}, {"name": "Piadina 21", "category": "Speciali", "price": 8, "ingredients": ["alici marinate", "cipolla fresca", "rucola"]}, {"name": "Pollo & Tartara", "category": "Pollo & Vitello", "price": 8.5, "ingredients": ["fesa di petto di pollo fresco", "salsa tartara", "pomodoro fresco", "insalata"]}, {"name": "Pollo, Fontina & Mayo", "category": "Pollo & Vitello", "price": 8.5, "ingredients": ["fesa di petto di pollo fresco", "maionese", "fontina", "pomodoro fresco", "insalata"]}, {"name": "Pollo Caesar", "category": "Pollo & Vitello", "price": 8.5, "ingredients": ["fesa di petto di pollo fresco", "salsa caesar cremosa", "pomodoro fresco", "insalata"]}, {"name": "Rotolo Vitel Tonnè", "category": "Pollo & Vitello", "price": 9, "ingredients": ["sottofesa di vitello fresca", "capperi", "salsa tonnata"]}, {"name": "Diavola", "category": "Crescioni", "price": 4.5, "ingredients": ["pomodoro fresco", "mozzarella", "salame piccante"]}, {"name": "Bomba", "category": "Crescioni", "price": 6, "ingredients": ["mozzarella", "funghi freschi", "pancetta", "radicchio"]}, {"name": "Zingara", "category": "Crescioni", "price": 6, "ingredients": ["pomodoro fresco", "mozzarella", "olive nere", "funghi freschi", "prosciutto cotto"]}, {"name": "Napoli", "category": "Crescioni", "price": 6, "ingredients": ["pomodoro fresco", "mozzarella", "acciughe", "capperi"]}, {"name": "Caprese", "category": "Crescioni", "price": 6, "ingredients": ["mozzarella", "pomodoro fresco", "olive nere", "grana", "origano"]}, {"name": "Contadino", "category": "Crescioni", "price": 6, "ingredients": ["patate", "cipolla fresca", "pancetta toscana"]}, {"name": "Buongustaio", "category": "Crescioni", "price": 6, "ingredients": ["mozzarella", "mascarpone", "zucchine grigliate", "prosciutto cotto"]}, {"name": "Carbonara", "category": "Crescioni Novità", "price": 6, "ingredients": ["pomodoro fresco", "mozzarella", "salsa carbonara", "bacon croccante"]}, {"name": "Parmigiana", "category": "Crescioni Novità", "price": 6, "ingredients": ["pomodoro fresco", "salsa gran crema parmigiano", "melanzane"]}, {"name": "Ragusano", "category": "Crescioni Novità", "price": 6, "ingredients": ["mozzarella", "zucchine grigliate", "prosciutto cotto", "ragusano"]}, {"name": "Ragusano Rosso", "category": "Crescioni Novità", "price": 6, "ingredients": ["pomodoro fresco", "ragusano", "salame piccante"]}, {"name": "Giove", "category": "Rotoli", "price": 6, "ingredients": ["mozzarella", "pancetta toscana", "rucola"]}, {"name": "Nettuno", "category": "Rotoli", "price": 6, "ingredients": ["mozzarella", "prosciutto cotto", "funghi freschi"]}, {"name": "Estate", "category": "Rotoli", "price": 7, "ingredients": ["mozzarella", "salsiccia", "salame piccante"]}, {"name": "Plutone", "category": "Rotoli", "price": 7, "ingredients": ["mozzarella", "prosciutto cotto", "melanzane"]}, {"name": "Saturno", "category": "Rotoli", "price": 7, "ingredients": ["squacquerone", "prosciutto crudo", "rucola"]}, {"name": "Borgo", "category": "Rotoli", "price": 7, "ingredients": ["nutella", "mascarpone", "nocciole"]}, {"name": "Boscaiolo", "category": "Rotoli", "price": 7, "ingredients": ["mozzarella", "speck", "funghi porcini"]}, {"name": "Gonzales", "category": "Rotoli", "price": 7, "ingredients": ["maionese", "salsa piccante", "ketchup", "prosciutto cotto", "insalata"]}, {"name": "Urano", "category": "Rotoli", "price": 7, "ingredients": ["erbe", "squacquerone", "salame piccante"]}, {"name": "Mercurio", "category": "Rotoli", "price": 8, "ingredients": ["mozzarella", "funghi porcini", "taleggio", "radicchio"]}, {"name": "Gustoso", "category": "Rotoli", "price": 8, "ingredients": ["mozzarella", "speck", "melanzane", "scamorza"]}, {"name": "Vegetariano", "category": "Rotoli", "price": 7, "ingredients": ["mozzarella", "funghi freschi", "rucola", "pomodoro fresco"]}, {"name": "Primavera", "category": "Rotoli", "price": 8, "ingredients": ["mozzarella", "prosciutto crudo", "pomodoro fresco", "rucola"]}, {"name": "Sfizioso", "category": "Rotoli", "price": 8, "ingredients": ["mozzarella", "gorgonzola", "speck", "radicchio"]}, {"name": "Delicato", "category": "Rotoli", "price": 8, "ingredients": ["mozzarella", "prosciutto cotto", "carciofi", "fontina"]}, {"name": "Ortolano", "category": "Rotoli", "price": 8, "ingredients": ["mozzarella", "verdure", "fontina"]}, {"name": "Rustico", "category": "Rotoli", "price": 8, "ingredients": ["mozzarella", "fontina", "porchetta", "insalata", "pomodoro fresco"]}, {"name": "Caprese", "category": "Rotoli", "price": 7, "ingredients": ["mozzarella", "pomodoro fresco", "olive nere", "grana", "origano"]}, {"name": "Olimpo", "category": "Rotoli", "price": 8, "ingredients": ["fontina", "crema tartufata", "salame piccante"]}, {"name": "Capri", "category": "Rotoli", "price": 8, "ingredients": ["mozzarella", "pomodori secchi", "melanzane", "salame piccante"]}, {"name": "Amalfi", "category": "Rotoli", "price": 8, "ingredients": ["mozzarella", "speck", "gorgonzola", "noci"]}, {"name": "Taratatà", "category": "Rotoli", "price": 7, "ingredients": ["salsa tartara", "prosciutto cotto", "funghi freschi", "insalata"]}, {"name": "Marte", "category": "Rotoli", "price": 8, "ingredients": ["maionese", "tonno", "pomodoro fresco", "cipolline", "rucola"]}, {"name": "Zingara", "category": "Rotoli", "price": 8, "ingredients": ["pomodoro fresco", "mozzarella", "prosciutto cotto", "olive nere", "funghi freschi"]}, {"name": "Venere", "category": "Rotoli", "price": 7, "ingredients": ["maionese", "prosciutto cotto", "insalata capricciosa", "insalata"]}, {"name": "Tonnè", "category": "Rotoli", "price": 8, "ingredients": ["salsa tonnata", "prosciutto cotto", "capperi"]}, {"name": "Kebab", "category": "Rotoli", "price": 8, "ingredients": ["salsa yogurt", "salsa piccante", "kebab", "insalata", "pomodoro fresco"]}, {"name": "Rotolo 28", "category": "Rotoli", "price": 8, "ingredients": ["pulled pork", "insalata", "cipolla caramellata", "salsa barbecue"]}, {"name": "Rotolo 29", "category": "Rotoli", "price": 7, "ingredients": ["speck", "funghi freschi", "salsa boscaiola"]}, {"name": "Rotolo 36", "category": "Rotoli", "price": 8, "ingredients": ["tonno", "insalata", "radicchio", "cipolla fresca", "rucola", "pomodoro fresco"]}, {"name": "Rotolo 42", "category": "Rotoli", "price": 8, "ingredients": ["brie", "speck", "champignon", "fettine di mele"]}, {"name": "Rotolo 43", "category": "Rotoli", "price": 8, "ingredients": ["gorgonzola", "pancetta", "semi di sesamo", "radicchio", "aceto balsamico"]}, {"name": "Aurora Piadipizza", "category": "Piadina Pizza", "price": 9, "ingredients": ["base piadina molto sottile", "salsa di pomodoro", "squacquerone", "insalata", "pomodoro fresco", "grana", "rucola"]}, {"name": "Autunno Piadipizza", "category": "Piadina Pizza", "price": 9, "ingredients": ["pomodoro fresco", "mozzarella", "gorgonzola", "zucca", "pancetta"]}];
+
+// ---------- CONFIGURATORE ----------
+let configState = null;
+// Ingredienti non utilizzabili in certi tipi di prodotto (es. salse troppo liquide nelle piadine)
+const EXCLUDED_BY_TYPE = {
+  "Piadina": ["ragusano", "salsa carbonara", "salsa gran crema parmigiano", "salsa di pomodoro", "kebab", "pulled pork"]
+};
+
+let activeCategory = null;
+
+function openConfigurator(type, emoji, basePrice, impastoMode, targetEl) {
+  const hasImpasto = impastoMode === "full" || impastoMode === "basic";
+  configState = {
+    type, emoji, basePrice, impastoMode,
+    hasImpasto,
+    impasto: hasImpasto ? "Semplice" : null,
+    selections: {},
+    targetEl,
+    fixedPrice: null,
+    maxIngredients: null,
+    includedIngredients: [],
+    isFixedItem: false,
+    substNotes: []
+  };
+
+  // Popola le opzioni impasto in base alla modalità
+  const impastoSelect = document.getElementById("configImpastoSelect");
+  if (impastoMode === "full") {
+    impastoSelect.innerHTML = `
+      <option value="Semplice">Impasto classico</option>
+      <option value="Integrale">Impasto integrale (+€0,50)</option>
+      <option value="Integrale + Semi">Impasto integrale + semi (+€1,00)</option>
+    `;
+  } else if (impastoMode === "basic") {
+    impastoSelect.innerHTML = `
+      <option value="Semplice">Impasto classico</option>
+      <option value="Integrale">Impasto integrale (+€0,50)</option>
+    `;
+  }
+
+  document.getElementById("configTitle").textContent = `${emoji} Componi il tuo ${type.toLowerCase()}`;
+  document.getElementById("configSub").textContent = "Aggiungi gli ingredienti che vuoi — il prezzo si aggiorna in automatico";
+  document.getElementById("configImpastoRow").style.display = hasImpasto ? "block" : "none";
+  impastoSelect.value = "Semplice";
+  document.getElementById("configSearch").value = "";
+  activeCategory = null;
+  document.getElementById("configMaxNote").style.display = "none";
+
+  renderConfigIngredients("");
+  updateConfigTotal();
+  document.getElementById("configOverlay").classList.add("visible");
+}
+
+function openFixedConfigurator(item, categoria, rowEl) {
+  configState = {
+    type: item.name,
+    emoji: "🍕",
+    basePrice: item.price,
+    impastoMode: "none",
+    hasImpasto: false,
+    impasto: null,
+    selections: {},
+    targetEl: null,
+    fixedPrice: item.price,
+    maxIngredients: item.maxIngredients || 2,
+    includedIngredients: item.includedIngredients || [],
+    isFixedItem: true,
+    categoria,
+    rowEl
+  };
+
+  document.getElementById("configTitle").textContent = `🍕 ${item.name}`;
+  document.getElementById("configSub").textContent = `Già inclusi: ${(item.includedIngredients || []).join(", ")}. Scegli fino a ${item.maxIngredients} ingredienti extra.`;
+  document.getElementById("configImpastoRow").style.display = "none";
+  document.getElementById("configSearch").value = "";
+  activeCategory = null;
+  document.getElementById("configMaxNote").style.display = "block";
+  document.getElementById("configMaxNote").textContent = `0 / ${item.maxIngredients} ingredienti selezionati`;
+
+  renderConfigIngredients("");
+  updateConfigTotal();
+  document.getElementById("configOverlay").classList.add("visible");
+}
+
+function countSelectedIngredients() {
+  return Object.values(configState.selections).reduce((sum, qty) => sum + qty, 0);
+}
+
+function renderConfigIngredients(filterText) {
+  const listDiv = document.getElementById("configIngList");
+  const alphaBar = document.getElementById("configAlphaBar");
+  const filter = (filterText || "").toLowerCase();
+  const totalSelected = configState.isFixedItem ? countSelectedIngredients() : null;
+  const atMax = configState.isFixedItem && totalSelected >= configState.maxIngredients;
+
+  const allCats = [];
+  INGREDIENTS_LIST.forEach(i => { const c = i.category || "Altro"; if (!allCats.includes(c)) allCats.push(c); });
+  if (activeCategory && !allCats.includes(activeCategory)) activeCategory = null;
+
+  const excluded = EXCLUDED_BY_TYPE[configState.type] || [];
+  let filtered = INGREDIENTS_LIST.filter(ing => !excluded.includes(ing.name) && (!filter || ing.name.includes(filter)));
+  if (!filter && activeCategory) filtered = filtered.filter(ing => (ing.category || "Altro") === activeCategory);
+
+  let html = "";
+  let lastCat = "";
+  filtered.forEach(ing => {
+    const cat = ing.category || "Altro";
+    if (cat !== lastCat) {
+      html += `<div class="config-letter-header">${cat}</div>`;
+      lastCat = cat;
+    }
+    const qty = configState.selections[ing.name] || 0;
+    const priceLabel = configState.isFixedItem ? "" : `<div class="config-ing-price">+\u20ac${ing.price.toFixed(2).replace(".", ",")}</div>`;
+    const disablePlus = atMax && qty === 0;
+    const isOut = outOfStockCache.has(ing.name);
+    html += `
+      <div class="config-ing-row ${isOut ? 'is-out' : ''}">
+        <div class="config-ing-name">${ing.name}${isOut ? '<div class="config-ing-out">\u26a0\ufe0f Finito</div>' : ''}</div>
+        ${priceLabel}
+        <div class="config-ing-qty" data-ing="${ing.name.replace(/"/g,'&quot;')}" data-price="${ing.price}" data-out="${isOut ? '1' : '0'}">
+          <button type="button" class="ci-minus">\u2212</button>
+          <span class="config-ing-qty-val">${qty}</span>
+          <button type="button" class="ci-plus" ${disablePlus ? 'disabled style="opacity:0.3;"' : ''}>+</button>
+        </div>
+      </div>
+    `;
+  });
+  listDiv.innerHTML = html || '<div style="padding:20px;text-align:center;color:rgba(43,36,32,0.4);">Nessun ingrediente trovato</div>';
+  listDiv.scrollTop = 0;
+
+  if (filter) {
+    alphaBar.style.display = "none";
+  } else {
+    alphaBar.style.display = "flex";
+    let barHtml = `<button type="button" class="config-alpha-btn ${!activeCategory ? 'active' : ''}" data-cat="">Tutti</button>`;
+    barHtml += allCats.map(c => `<button type="button" class="config-alpha-btn ${activeCategory === c ? 'active' : ''}" data-cat="${c}">${c}</button>`).join("");
+    alphaBar.innerHTML = barHtml;
+    alphaBar.querySelectorAll(".config-alpha-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        activeCategory = btn.dataset.cat || null;
+        renderConfigIngredients(document.getElementById("configSearch").value);
+      });
+    });
+  }
+
+  listDiv.querySelectorAll(".config-ing-qty").forEach(el => {
+    const ingName = el.dataset.ing;
+    el.querySelector(".ci-plus").addEventListener("click", () => {
+      if (configState.isFixedItem && countSelectedIngredients() >= configState.maxIngredients) return;
+      if (el.dataset.out === "1") {
+        openSubstSheet(ingName);
+        return;
+      }
+      configState.selections[ingName] = (configState.selections[ingName] || 0) + 1;
+      updateConfigTotal();
+      renderConfigIngredients(document.getElementById("configSearch").value);
+    });
+    el.querySelector(".ci-minus").addEventListener("click", () => {
+      if (!configState.selections[ingName]) return;
+      configState.selections[ingName]--;
+      if (configState.selections[ingName] <= 0) delete configState.selections[ingName];
+      updateConfigTotal();
+      renderConfigIngredients(document.getElementById("configSearch").value);
+    });
+  });
+}
+
+// Trova il prodotto fisso che copre più ingredienti selezionati (a parità, prezzo più alto)
+function findBestFixedMatch() {
+  if (Object.keys(configState.selections).length === 0) return { match: null, extras: {} };
+
+  const typeToCategory = {
+    "Piadina": ["Piadine", "Speciali", "Pollo & Vitello"],
+    "Rotolo": ["Rotoli", "Pollo & Vitello"],
+    "Crescione": ["Crescioni", "Crescioni Novità"],
+    "Piadina Pizza": ["Piadina Pizza"],
+    "Crostone": ["Crostoni"]
+  };
+  const validCats = typeToCategory[configState.type] || [];
+
+  let best = null, bestCoverage = 0;
+  FIXED_PRODUCTS_DB.forEach(prod => {
+    if (!validCats.includes(prod.category)) return;
+    // In categorie miste (es. Pollo & Vitello) alcuni prodotti sono rotoli, altri piadine:
+    // distinguo dal nome, così un rotolo non viene riconosciuto componendo una piadina e viceversa.
+    const isRotoloProd = /^rotolo\b/i.test(prod.name);
+    if (configState.type === "Rotolo" && !isRotoloProd && prod.category !== "Rotoli") return;
+    if (configState.type === "Piadina" && isRotoloProd) return;
+    const counts = { ...configState.selections };
+    let covered = true;
+    for (const ing of prod.ingredients) {
+      if (!counts[ing] || counts[ing] <= 0) { covered = false; break; }
+      counts[ing]--;
+    }
+    if (covered) {
+      if (prod.ingredients.length > bestCoverage ||
+          (prod.ingredients.length === bestCoverage && best && prod.price > best.price)) {
+        best = prod; bestCoverage = prod.ingredients.length;
+      }
+    }
+  });
+
+  if (!best) return { match: null, extras: { ...configState.selections } };
+
+  const extras = { ...configState.selections };
+  best.ingredients.forEach(ing => {
+    if (extras[ing]) { extras[ing]--; if (extras[ing] <= 0) delete extras[ing]; }
+  });
+  return { match: best, extras };
+}
+
+function updateConfigTotal() {
+  document.getElementById("configBasePrice").textContent = formatPrice(configState.basePrice);
+
+  let total;
+
+  if (configState.isFixedItem) {
+    total = configState.fixedPrice;
+    const selected = countSelectedIngredients();
+    document.getElementById("configMaxNote").textContent = `${selected} / ${configState.maxIngredients} ingredienti selezionati`;
+  } else {
+    let impastoExtra = 0;
+    if (configState.hasImpasto) {
+      const impastoSelect = document.getElementById("configImpastoSelect");
+      configState.impasto = impastoSelect.value;
+      if (configState.impasto === "Integrale") {
+        impastoExtra = 0.50;
+      } else if (configState.impasto === "Integrale + Semi") {
+        impastoExtra = 1.00;
+      }
+    }
+
+    const { match, extras } = findBestFixedMatch();
+    const recEl = document.getElementById("configRecognized");
+
+    if (match) {
+      total = match.price + impastoExtra;
+      Object.entries(extras).forEach(([ingName, qty]) => {
+        const ing = INGREDIENTS_LIST.find(i => i.name === ingName);
+        if (ing) total += ing.price * qty;
+      });
+      configState._recognizedMatch = match;
+      configState._recognizedExtras = extras;
+      const extrasText = Object.entries(extras).map(([n,q]) => q>1?`${q}x ${n}`:n).join(", ");
+      const tipoNome = { "Piadina": "piadina", "Rotolo": "rotolo", "Crescione": "crescione", "Piadina Pizza": "piadina pizza", "Crostone": "crostone" }[configState.type] || "prodotto";
+      const prezzoFmt = "€" + match.price.toFixed(2).replace(".", ",");
+      recEl.style.display = "block";
+      if (extrasText) {
+        recEl.innerHTML = `Questo ${tipoNome} che hai creato esiste già nel nostro menu! Si chiama <strong>${match.name}</strong> (${prezzoFmt}), più gli ingredienti extra che hai aggiunto (${extrasText}). Per aggiungerlo al tuo ordine, clicca <strong>"Aggiungi al carrello"</strong> qui sotto.`;
+      } else {
+        recEl.innerHTML = `Questo ${tipoNome} che hai creato esiste già nel nostro menu! Si chiama <strong>${match.name}</strong> e costa <strong>${prezzoFmt}</strong>. Per aggiungerlo al tuo ordine, clicca <strong>"Aggiungi al carrello"</strong> qui sotto.`;
+      }
+    } else {
+      total = configState.basePrice + impastoExtra;
+      Object.entries(configState.selections).forEach(([ingName, qty]) => {
+        const ing = INGREDIENTS_LIST.find(i => i.name === ingName);
+        if (ing) total += ing.price * qty;
+      });
+      configState._recognizedMatch = null;
+      configState._recognizedExtras = null;
+      recEl.style.display = "none";
+    }
+  }
+
+  document.getElementById("configTotal").textContent = formatPrice(total);
+  return total;
+}
+
+document.getElementById("configImpastoSelect").addEventListener("change", updateConfigTotal);
+document.getElementById("configSearch").addEventListener("input", (e) => {
+  renderConfigIngredients(e.target.value);
+});
+document.getElementById("configClose").addEventListener("click", () => {
+  document.getElementById("configOverlay").classList.remove("visible");
+});
+document.getElementById("configOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "configOverlay") document.getElementById("configOverlay").classList.remove("visible");
+});
+
+document.getElementById("configConfirmBtn").addEventListener("click", () => {
+  const total = updateConfigTotal();
+  const selectedIngs = Object.entries(configState.selections);
+
+  if (selectedIngs.length === 0) {
+    alert("Seleziona almeno un ingrediente prima di aggiungere al carrello");
+    return;
+  }
+
+  const ingredientsText = selectedIngs.map(([name, qty]) => qty > 1 ? `${qty}x ${name}` : name).join(", ");
+  let name, id;
+
+  if (configState.isFixedItem) {
+    const categoriaVisualizzata = configState.categoria;
+    name = categoriaVisualizzata ? `[${categoriaVisualizzata}] ${configState.type}` : configState.type;
+    name += ` (${configState.includedIngredients.join(", ")} + ${ingredientsText})`;
+    id = "fixed_" + configState.type + "_" + Date.now();
+  } else {
+    const impastoLabel = configState.hasImpasto && configState.impasto !== "Semplice" ? ` (${configState.impasto})` : "";
+
+    if (configState._recognizedMatch) {
+      const match = configState._recognizedMatch;
+      const extras = configState._recognizedExtras || {};
+      const extrasText = Object.entries(extras).map(([n,q]) => q>1?`${q}x ${n}`:n).join(", ");
+      name = `[${match.category}] ${match.name}${impastoLabel}`;
+      if (extrasText) name += ` + ${extrasText}`;
+      id = "recognized_" + match.name + "_" + Date.now();
+    } else {
+      name = `🔶 ${configState.type.toUpperCase()} SU MISURA${impastoLabel} — ${ingredientsText}`;
+      id = "custom_" + configState.type + "_" + Date.now();
+    }
+  }
+
+  if (configState.substNotes && configState.substNotes.length > 0) {
+    name += ` ⚠️(${configState.substNotes.join("; ")})`;
+  }
+
+  cart[id] = { name: name, price: total, qty: 1, customPrice: false };
+  updateCartBar();
+
+  if (!configState.isFixedItem && configState.targetEl) {
+    const summaryEl = configState.targetEl.querySelector(".configure-summary");
+    if (summaryEl) summaryEl.textContent = `Ultimo aggiunto — ${formatPrice(total)}`;
+  }
+
+  document.getElementById("configOverlay").classList.remove("visible");
+});
+
+function updateCartBar() {
+  const ids = Object.keys(cart).filter(id => cart[id].qty > 0);
+  const bar = document.getElementById("cartBar");
+  if (ids.length === 0) { bar.classList.remove("visible"); return; }
+  bar.classList.add("visible");
+  let totalQty = 0, totalPrice = 0;
+  ids.forEach(id => { totalQty += cart[id].qty; totalPrice += cart[id].qty * cart[id].price; });
+  document.getElementById("cartInfo").textContent = totalQty + (totalQty === 1 ? " prodotto" : " prodotti");
+  document.getElementById("cartTotal").textContent = formatPrice(totalPrice);
+}
+
+function buildOrderSummary() {
+  const ids = Object.keys(cart).filter(id => cart[id].qty > 0);
+  let html = "", total = 0;
+  ids.forEach(id => {
+    const item = cart[id];
+    if (item.customPrice) {
+      html += `<div class="line"><span>${item.qty}x ${item.name}</span><span>da confermare</span></div>`;
+    } else {
+      const lineTotal = item.qty * item.price;
+      total += lineTotal;
+      html += `<div class="line"><span>${item.qty}x ${item.name}</span><span>${formatPrice(lineTotal)}</span></div>`;
+    }
+  });
+  html += `<div class="line total"><span>Totale (prodotti a menu)</span><span>${formatPrice(total)}</span></div>`;
+  document.getElementById("orderSummary").innerHTML = html;
+  return total;
+}
+
+function validateField(id, condition) {
+  const field = document.getElementById("field-" + id);
+  field.classList.toggle("error", !condition);
+  return condition;
+}
+
+// ---------- SCHEDA SOSTITUZIONE INGREDIENTE FINITO ----------
+let substTargetIng = null;
+
+function openSubstSheet(ingName) {
+  substTargetIng = ingName;
+  document.getElementById("substTitle").textContent = `⚠️ "${ingName}" è finito`;
+  document.getElementById("substSub").textContent = "Puoi prenderlo lo stesso senza questo ingrediente, oppure scegliere con cosa sostituirlo.";
+  document.getElementById("substSearch").value = "";
+  renderSubstList("");
+  document.getElementById("substOverlay").classList.add("visible");
+}
+
+function renderSubstList(filterText) {
+  const listDiv = document.getElementById("substList");
+  const filter = (filterText || "").toLowerCase();
+  const options = INGREDIENTS_LIST.filter(i =>
+    i.name !== substTargetIng && !outOfStockCache.has(i.name) && (!filter || i.name.includes(filter))
+  );
+  listDiv.innerHTML = options.map(i => `
+    <div class="subst-row" data-ing="${i.name.replace(/"/g,'&quot;')}">
+      <span>${i.name}</span>
+      <span class="subst-row-price">+€${i.price.toFixed(2).replace(".", ",")}</span>
+    </div>`).join("") || '<div style="padding:20px;text-align:center;color:rgba(43,36,32,0.4);">Nessun ingrediente trovato</div>';
+
+  listDiv.querySelectorAll(".subst-row").forEach(row => {
+    row.addEventListener("click", () => {
+      const sub = row.dataset.ing;
+      configState.selections[sub] = (configState.selections[sub] || 0) + 1;
+      if (!configState.substNotes) configState.substNotes = [];
+      configState.substNotes.push(`${substTargetIng} sostituito con ${sub}`);
+      document.getElementById("substOverlay").classList.remove("visible");
+      updateConfigTotal();
+      renderConfigIngredients(document.getElementById("configSearch").value);
+    });
+  });
+}
+
+document.getElementById("substSearch").addEventListener("input", (e) => renderSubstList(e.target.value));
+document.getElementById("substSkipBtn").addEventListener("click", () => {
+  if (!configState.substNotes) configState.substNotes = [];
+  configState.substNotes.push(`senza ${substTargetIng} (finito)`);
+  document.getElementById("substOverlay").classList.remove("visible");
+  updateConfigTotal();
+  renderConfigIngredients(document.getElementById("configSearch").value);
+});
+document.getElementById("substClose").addEventListener("click", () => {
+  document.getElementById("substOverlay").classList.remove("visible");
+});
+
+// ---------- GIORNI E ORARI DI RITIRO ----------
+const SLOT_TIMES = ["15:30","15:50","16:10","16:30","16:50","17:10","17:30","17:50","18:10","18:30","18:50","19:10","19:30","19:50","20:10","20:30"];
+const CLOSED_WEEKDAYS = [1, 2]; // 0=domenica, 1=lunedì, 2=martedì
+const GIORNI_NOMI = ["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"];
+const MIN_ANTICIPO_MIN = 20; // minuti minimi di preavviso per oggi
+
+function ymd(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function slotsDisponibiliPerData(d) {
+  const oggi = new Date();
+  const isOggi = ymd(d) === ymd(oggi);
+  if (!isOggi) return SLOT_TIMES.slice();
+  const limite = oggi.getHours() * 60 + oggi.getMinutes() + MIN_ANTICIPO_MIN;
+  return SLOT_TIMES.filter(t => {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m >= limite;
+  });
+}
+function buildGiorniOptions() {
+  const sel = document.getElementById("giorno");
+  const oggi = new Date();
+  let html = '<option value="">Scegli un giorno</option>';
+  let trovati = 0;
+  for (let i = 0; i < 14 && trovati < 7; i++) {
+    const d = new Date(oggi.getFullYear(), oggi.getMonth(), oggi.getDate() + i);
+    if (CLOSED_WEEKDAYS.includes(d.getDay())) continue;
+    if (i === 0 && slotsDisponibiliPerData(d).length === 0) continue; // oggi ormai chiuso
+    let label;
+    if (i === 0) label = "Oggi";
+    else if (i === 1) label = "Domani";
+    else label = GIORNI_NOMI[d.getDay()];
+    label += ` ${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}`;
+    html += `<option value="${ymd(d)}">${label}</option>`;
+    trovati++;
+  }
+  sel.innerHTML = html;
+}
+function buildOrariOptions() {
+  const sel = document.getElementById("orario");
+  const giorno = document.getElementById("giorno").value;
+  if (!giorno) { sel.innerHTML = '<option value="">Scegli prima il giorno</option>'; return; }
+  const [y, m, d] = giorno.split("-").map(Number);
+  const slots = slotsDisponibiliPerData(new Date(y, m - 1, d)).filter(t => !isSlotClosed(giorno, t));
+  sel.innerHTML = '<option value="">Scegli un orario</option>' + slots.map(t => `<option>${t}</option>`).join("");
+}
+document.getElementById("giorno").addEventListener("change", buildOrariOptions);
+buildGiorniOptions();
+buildOrariOptions();
+
+// ---------- PROPOSTE AGGIUNTIVE PRIMA DELL'ORDINE ----------
+let upsellDone = false;
+
+function pickRandom(arr, n) {
+  const copy = arr.slice();
+  const out = [];
+  while (copy.length && out.length < n) {
+    out.push(copy.splice(Math.floor(Math.random() * copy.length), 1)[0]);
+  }
+  return out;
+}
+
+function getUpsellPool(categorie) {
+  const pool = [];
+  categorie.forEach(cat => {
+    const data = MENU[cat];
+    if (!data) return;
+    const items = data.subgroups ? data.subgroups.flatMap(s => s.items) : (data.items || []);
+    items.forEach(item => {
+      if (item.priceLabel || item.needsConfig || item.price === undefined) return;
+      const stableId = "avail_" + slugify(cat) + "_" + slugify(item.name) + (item.unit2 ? "_" + slugify(item.unit2) : "");
+      if (unavailableCache.has(stableId)) return;
+      pool.push({ cat, item });
+    });
+  });
+  return pool;
+}
+
+function renderUpsellGroup(containerId, titolo, scelte) {
+  const el = document.getElementById(containerId);
+  if (scelte.length === 0) { el.innerHTML = ""; return; }
+  el.innerHTML = `<div class="upsell-group-title">${titolo}</div>` + scelte.map((s, i) => {
+    const id = "upsell_" + containerId + "_" + i;
+    return `
+      <div class="upsell-row">
+        <div class="upsell-name">${s.item.name}${s.item.unit2 ? " (" + s.item.unit2 + ")" : ""}</div>
+        <div class="upsell-price">${formatPrice(s.item.price)}</div>
+        <div class="qty-control" data-upsell="${id}">
+          <button class="qty-btn minus">−</button>
+          <span class="qty-val">0</span>
+          <button class="qty-btn plus">+</button>
+        </div>
+      </div>`;
+  }).join("");
+
+  el.querySelectorAll(".qty-control").forEach((ctrl, i) => {
+    const s = scelte[i];
+    const cartId = "upsell_" + slugify(s.cat) + "_" + slugify(s.item.name);
+    const fullName = `[${s.cat}] ${s.item.name}${s.item.unit2 ? " (" + s.item.unit2 + ")" : ""}`;
+    ctrl.querySelector(".plus").addEventListener("click", () => {
+      if (!cart[cartId]) cart[cartId] = { name: fullName, price: s.item.price, qty: 0 };
+      cart[cartId].qty++;
+      ctrl.querySelector(".qty-val").textContent = cart[cartId].qty;
+      updateCartBar();
+    });
+    ctrl.querySelector(".minus").addEventListener("click", () => {
+      if (!cart[cartId] || cart[cartId].qty === 0) return;
+      cart[cartId].qty--;
+      ctrl.querySelector(".qty-val").textContent = cart[cartId].qty;
+      if (cart[cartId].qty === 0) delete cart[cartId];
+      updateCartBar();
+    });
+  });
+}
+
+function openUpsell() {
+  const bibite = pickRandom(getUpsellPool(["Le Bibite", "Le Birre"]), 3);
+  const dolci = pickRandom(getUpsellPool(["Crescioni Dolci"]), 2);
+  if (bibite.length === 0 && dolci.length === 0) return false;
+  renderUpsellGroup("upsellDrinks", "🥤 Da bere", bibite);
+  renderUpsellGroup("upsellSweets", "🍫 Dolci", dolci);
+  document.getElementById("upsellOverlay").classList.add("visible");
+  return true;
+}
+
+function closeUpsell() {
+  document.getElementById("upsellOverlay").classList.remove("visible");
+}
+
+document.getElementById("upsellClose").addEventListener("click", () => {
+  upsellDone = true;
+  closeUpsell();
+  openCheckoutSheet();
+});
+document.getElementById("upsellContinue").addEventListener("click", () => {
+  upsellDone = true;
+  closeUpsell();
+  openCheckoutSheet();
+});
+
+function openCheckoutSheet() {
+  buildOrderSummary();
+  document.getElementById("overlay").classList.add("visible");
+}
+
+// ---------- GESTIONE DISPONIBILITÀ ----------
+const STORAGE_KEY = "piadina_unavailable_items";
+const STOCK_KEY = "piadina_out_of_stock_ingredients";
+const SLOTS_KEY = "piadina_closed_slots";
+// Archivio condiviso online (jsonblob): permette lettura E scrittura dal browser.
+// Sostituire con il proprio ID blob.
+const BIN_ID = "6a5d3af0f5f4af5e29a4fd13";
+const BIN_KEY = "$2a$10$dBRs72yXbhs2DPkv4zByvuLbGhT3H/57Rl33SvNTkgOUZPOwWRDDC";
+const REMOTE_READ_URL = "https://api.jsonbin.io/v3/b/" + BIN_ID + "/latest";
+const REMOTE_WRITE_URL = "https://api.jsonbin.io/v3/b/" + BIN_ID;
+const ORDERS_BIN_ID = "6a5d42c1f5f4af5e29a50cf1";
+const ORDERS_READ_URL = "https://api.jsonbin.io/v3/b/" + ORDERS_BIN_ID + "/latest";
+const ORDERS_WRITE_URL = "https://api.jsonbin.io/v3/b/" + ORDERS_BIN_ID;
+
+// Deposita l'ordine nell'archivio condiviso, così compare da solo nell'app di gestione
+async function pushOrderToBin(ordine) {
+  try {
+    const res = await fetch(ORDERS_READ_URL, {
+      cache: "no-store",
+      headers: { "X-Master-Key": BIN_KEY, "X-Bin-Meta": "false" }
+    });
+    let lista = [];
+    if (res.ok) {
+      const raw = await res.json();
+      const data = (raw && raw.record) ? raw.record : raw;
+      if (Array.isArray(data)) lista = data.filter(o => o && typeof o === "object");
+    }
+    lista.push(ordine);
+    // tengo solo gli ultimi 100 per non far crescere troppo l'archivio
+    if (lista.length > 100) lista = lista.slice(-100);
+    await fetch(ORDERS_WRITE_URL, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Master-Key": BIN_KEY,
+        "X-Bin-Versioning": "false"
+      },
+      body: JSON.stringify(lista)
+    });
+  } catch (e) {}
+}
+const ADMIN_CODE = "3289";
+let unavailableCache = new Set();
+let outOfStockCache = new Set();
+let closedSlotsCache = {}; // { "YYYY-MM-DD": ["19:30", ...] }
+let adminUnlocked = false;
+let pendingChanges = false;
+
+// Legge dal server condiviso (così i clienti vedono ciò che segni tu)
+async function syncFromRemote() {
+  const adminOpen = document.getElementById("adminOverlay").classList.contains("visible");
+  if (adminOpen) return false;
+  try {
+    const res = await fetch(REMOTE_READ_URL, {
+      cache: "no-store",
+      headers: { "X-Master-Key": BIN_KEY, "X-Bin-Meta": "false" }
+    });
+    if (!res.ok) return false;
+    const raw = await res.json();
+    const data = (raw && raw.record) ? raw.record : raw;
+    if (data && Array.isArray(data.unavailable) && Array.isArray(data.outOfStock)) {
+      unavailableCache = new Set(data.unavailable);
+      outOfStockCache = new Set(data.outOfStock);
+      closedSlotsCache = (data.closedSlots && typeof data.closedSlots === "object") ? data.closedSlots : {};
+      saveUnavailableSet(unavailableCache);
+      saveOutOfStockSet(outOfStockCache);
+      saveClosedSlots(closedSlotsCache);
+      buildGiorniOptions();
+      buildOrariOptions();
+      applyAvailabilityToMenu();
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+
+// Scrive sul server condiviso
+async function pushToRemote() {
+  try {
+    const res = await fetch(REMOTE_WRITE_URL, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Master-Key": BIN_KEY,
+        "X-Bin-Versioning": "false"
+      },
+      body: JSON.stringify({
+        unavailable: Array.from(unavailableCache),
+        outOfStock: Array.from(outOfStockCache),
+        closedSlots: closedSlotsCache
+      })
+    });
+    setSyncStatus(res.ok ? "ok" : "err");
+    return res.ok;
+  } catch (e) {
+    setSyncStatus("err");
+    return false;
+  }
+}
+
+function updateSaveBtn() {
+  const btn = document.getElementById("adminSaveBtn");
+  if (!btn) return;
+  if (pendingChanges) {
+    btn.classList.add("dirty");
+    btn.textContent = "💾 Salva le modifiche (non salvate)";
+  } else {
+    btn.classList.remove("dirty");
+    btn.textContent = "💾 Salva le modifiche";
+  }
+}
+
+document.getElementById("adminSaveBtn").addEventListener("click", async () => {
+  const btn = document.getElementById("adminSaveBtn");
+  btn.disabled = true;
+  setSyncStatus("saving");
+  const ok = await pushToRemote();
+  btn.disabled = false;
+  if (ok) { pendingChanges = false; }
+  updateSaveBtn();
+});
+
+function setSyncStatus(state) {
+  const el = document.getElementById("adminSyncStatus");
+  if (!el) return;
+  if (state === "saving") { el.textContent = "Salvataggio in corso…"; el.className = "admin-sync saving"; }
+  else if (state === "ok") { el.textContent = "✓ Salvato online — lo vedono anche i clienti"; el.className = "admin-sync ok"; }
+  else if (state === "noconfig") { el.textContent = "⚠️ Archivio online non configurato: salvato solo su questo dispositivo"; el.className = "admin-sync err"; }
+  else { el.textContent = "⚠️ Salvataggio online non riuscito: salvato solo su questo dispositivo"; el.className = "admin-sync err"; }
+}
+
+function loadUnavailableSet() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    unavailableCache = new Set(raw ? JSON.parse(raw) : []);
+  } catch (e) { unavailableCache = new Set(); }
+  return unavailableCache;
+}
+function saveUnavailableSet(set) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(set))); } catch (e) {}
+}
+function loadOutOfStockSet() {
+  try {
+    const raw = localStorage.getItem(STOCK_KEY);
+    outOfStockCache = new Set(raw ? JSON.parse(raw) : []);
+  } catch (e) { outOfStockCache = new Set(); }
+  return outOfStockCache;
+}
+function saveOutOfStockSet(set) {
+  try { localStorage.setItem(STOCK_KEY, JSON.stringify(Array.from(set))); } catch (e) {}
+}
+function loadClosedSlots() {
+  try {
+    const raw = localStorage.getItem(SLOTS_KEY);
+    closedSlotsCache = raw ? JSON.parse(raw) : {};
+  } catch (e) { closedSlotsCache = {}; }
+  return closedSlotsCache;
+}
+function saveClosedSlots(obj) {
+  try { localStorage.setItem(SLOTS_KEY, JSON.stringify(obj)); } catch (e) {}
+}
+function isSlotClosed(dateStr, time) {
+  return Array.isArray(closedSlotsCache[dateStr]) && closedSlotsCache[dateStr].includes(time);
+}
+
+function applyAvailabilityToMenu() {
+  document.querySelectorAll(".item[data-stable-id]").forEach(row => {
+    row.classList.toggle("unavailable", unavailableCache.has(row.dataset.stableId));
+  });
+  applyStockAlertsToMenu();
+}
+
+// Mostra alert rosso sui prodotti del menu che contengono ingredienti esauriti
+function applyStockAlertsToMenu() {
+  document.querySelectorAll(".item[data-ingredients]").forEach(row => {
+    const ings = (row.dataset.ingredients || "").split("|").filter(Boolean);
+    const missing = ings.filter(i => outOfStockCache.has(i));
+    let alertEl = row.querySelector(".item-stock-alert");
+    if (missing.length > 0) {
+      if (!alertEl) {
+        alertEl = document.createElement("div");
+        alertEl.className = "item-stock-alert";
+        row.querySelector(".item-left").appendChild(alertEl);
+      }
+      alertEl.textContent = "⚠️ Attenzione: " + missing.join(", ") + " è finito";
+    } else if (alertEl) {
+      alertEl.remove();
+    }
+  });
+}
+
+// ---------- PANNELLO ADMIN ----------
+let adminTab = "prodotti";
+let adminSlotDay = "";
+
+function openAdminPanel() {
+  if (!adminUnlocked) {
+    document.getElementById("adminGate").style.display = "block";
+    document.getElementById("adminContent").style.display = "none";
+    document.getElementById("adminCodeInput").value = "";
+    document.getElementById("adminCodeError").style.display = "none";
+  } else {
+    document.getElementById("adminGate").style.display = "none";
+    document.getElementById("adminContent").style.display = "block";
+    buildAdminPanel();
+  }
+  document.getElementById("adminOverlay").classList.add("visible");
+}
+
+function tryAdminCode() {
+  const raw = document.getElementById("adminCodeInput").value || "";
+  const val = raw.replace(/\D/g, "");
+  if (val === ADMIN_CODE) {
+    adminUnlocked = true;
+    document.getElementById("adminCodeError").style.display = "none";
+    document.getElementById("adminGate").style.display = "none";
+    document.getElementById("adminContent").style.display = "block";
+    buildAdminPanel();
+  } else {
+    document.getElementById("adminCodeError").style.display = "block";
+  }
+}
+
+document.getElementById("adminCodeBtn").addEventListener("click", tryAdminCode);
+document.getElementById("adminCodeInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); tryAdminCode(); }
+});
+
+document.querySelectorAll(".admin-tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".admin-tab-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    adminTab = btn.dataset.tab;
+    buildAdminPanel();
+  });
+});
+
+function buildAdminPanel() {
+  const adminList = document.getElementById("adminList");
+  loadUnavailableSet();
+  loadOutOfStockSet();
+
+  if (adminTab === "orari") {
+    loadClosedSlots();
+    const oggi = new Date();
+    let giorni = [];
+    let trovati = 0;
+    for (let i = 0; i < 14 && trovati < 7; i++) {
+      const d = new Date(oggi.getFullYear(), oggi.getMonth(), oggi.getDate() + i);
+      if (CLOSED_WEEKDAYS.includes(d.getDay())) continue;
+      let label = i === 0 ? "Oggi" : (i === 1 ? "Domani" : GIORNI_NOMI[d.getDay()]);
+      label += ` ${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}`;
+      giorni.push({ value: ymd(d), label });
+      trovati++;
+    }
+    if (!adminSlotDay || !giorni.some(g => g.value === adminSlotDay)) adminSlotDay = giorni[0] ? giorni[0].value : "";
+
+    let html = `<div class="admin-cat-title">Giorno</div>
+      <select id="adminSlotDaySelect" class="admin-day-select">
+        ${giorni.map(g => `<option value="${g.value}" ${g.value === adminSlotDay ? "selected" : ""}>${g.label}</option>`).join("")}
+      </select>
+      <div class="admin-cat-title">Fasce orarie — tocca per chiudere</div>`;
+
+    SLOT_TIMES.forEach(t => {
+      const chiuso = isSlotClosed(adminSlotDay, t);
+      html += `
+        <div class="admin-item-row admin-toggle-row" data-slot="${t}">
+          <div class="admin-item-name">${t}</div>
+          <div>
+            <div class="admin-switch ${chiuso ? 'on' : ''}"><span class="admin-switch-slider"></span></div>
+            <div class="admin-switch-label">${chiuso ? "Chiuso" : "Aperto"}</div>
+          </div>
+        </div>`;
+    });
+    adminList.innerHTML = html;
+
+    document.getElementById("adminSlotDaySelect").addEventListener("change", (e) => {
+      adminSlotDay = e.target.value;
+      buildAdminPanel();
+    });
+    adminList.querySelectorAll('.admin-toggle-row').forEach(row => {
+      row.addEventListener("click", () => {
+        const t = row.dataset.slot;
+        if (!Array.isArray(closedSlotsCache[adminSlotDay])) closedSlotsCache[adminSlotDay] = [];
+        const arr = closedSlotsCache[adminSlotDay];
+        const idx = arr.indexOf(t);
+        if (idx >= 0) arr.splice(idx, 1); else arr.push(t);
+        if (arr.length === 0) delete closedSlotsCache[adminSlotDay];
+        saveClosedSlots(closedSlotsCache);
+        pendingChanges = true;
+        buildAdminPanel();
+        updateSaveBtn();
+        buildOrariOptions();
+      });
+    });
+    return;
+  }
+
+  if (adminTab === "ingredienti") {
+    let html = `<div class="admin-cat-title">Ingredienti — tocca per segnare "finito"</div>`;
+    INGREDIENTS_LIST.forEach(ing => {
+      const isOut = outOfStockCache.has(ing.name);
+      html += `
+        <div class="admin-item-row admin-toggle-row" data-ing="${ing.name.replace(/"/g,'&quot;')}">
+          <div class="admin-item-name">${ing.name}</div>
+          <div>
+            <div class="admin-switch ${isOut ? 'on' : ''}"><span class="admin-switch-slider"></span></div>
+            <div class="admin-switch-label">${isOut ? "Finito" : "Disponibile"}</div>
+          </div>
+        </div>`;
+    });
+    adminList.innerHTML = html;
+    adminList.querySelectorAll('.admin-toggle-row').forEach(row => {
+      row.addEventListener("click", () => {
+        const n = row.dataset.ing;
+        if (outOfStockCache.has(n)) outOfStockCache.delete(n);
+        else outOfStockCache.add(n);
+        saveOutOfStockSet(outOfStockCache);
+        pendingChanges = true;
+        buildAdminPanel();
+        updateSaveBtn();
+        applyStockAlertsToMenu();
+      });
+    });
+    return;
+  }
+
+  let html = "";
+  Object.entries(MENU).forEach(([cat, data]) => {
+    const items = data.subgroups ? data.subgroups.flatMap(s => s.items) : (data.items || []);
+    const orderable = items.filter(it => !it.priceLabel);
+    if (orderable.length === 0) return;
+    html += `<div class="admin-cat-title">${cat}</div>`;
+    orderable.forEach(item => {
+      const stableId = "avail_" + slugify(cat) + "_" + slugify(item.name) + (item.unit2 ? "_" + slugify(item.unit2) : "");
+      const isChecked = unavailableCache.has(stableId);
+      html += `
+        <div class="admin-item-row admin-toggle-row" data-stable-id="${stableId}">
+          <div class="admin-item-name">${item.name}${item.unit2 ? " (" + item.unit2 + ")" : ""}</div>
+          <div>
+            <div class="admin-switch ${isChecked ? 'on' : ''}"><span class="admin-switch-slider"></span></div>
+            <div class="admin-switch-label">${isChecked ? "Non disp." : "Disponibile"}</div>
+          </div>
+        </div>`;
+    });
+  });
+  adminList.innerHTML = html;
+
+  adminList.querySelectorAll('.admin-toggle-row').forEach(row => {
+    row.addEventListener("click", () => {
+      const id = row.dataset.stableId;
+      if (unavailableCache.has(id)) unavailableCache.delete(id);
+      else unavailableCache.add(id);
+      saveUnavailableSet(unavailableCache);
+      pendingChanges = true;
+      buildAdminPanel();
+      updateSaveBtn();
+      applyAvailabilityToMenu();
+    });
+  });
+}
+
+document.getElementById("adminToggleLink").addEventListener("click", (e) => {
+  e.preventDefault();
+  openAdminPanel();
+});
+document.getElementById("adminClose").addEventListener("click", () => {
+  document.getElementById("adminOverlay").classList.remove("visible");
+});
+document.getElementById("adminOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "adminOverlay") document.getElementById("adminOverlay").classList.remove("visible");
+});
+
+// Init
+buildTabs();
+buildMenu();
+setupScrollSpy();
+
+loadUnavailableSet();
+loadOutOfStockSet();
+loadClosedSlots();
+buildGiorniOptions();
+buildOrariOptions();
+applyAvailabilityToMenu();
+setupClubCheckout();
+
+// Sincronizza con il server condiviso: subito e poi ogni 30 secondi
+syncFromRemote();
+setInterval(syncFromRemote, 30000);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) syncFromRemote();
+});
+
+document.getElementById("openCheckout").addEventListener("click", async () => {
+  await loadClubProfile();
+  if (!upsellDone && openUpsell()) return;
+  openCheckoutSheet();
+});
+document.getElementById("closeSheet").addEventListener("click", () => {
+  document.getElementById("overlay").classList.remove("visible");
+});
+document.getElementById("overlay").addEventListener("click", (e) => {
+  if (e.target.id === "overlay") document.getElementById("overlay").classList.remove("visible");
+});
+
+document.getElementById("checkoutForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const nome = document.getElementById("nome").value.trim();
+  const telefono = document.getElementById("telefono").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const giorno = document.getElementById("giorno").value;
+  const giornoLabel = document.getElementById("giorno").selectedOptions[0] ? document.getElementById("giorno").selectedOptions[0].textContent : "";
+  const orario = document.getElementById("orario").value;
+  const note = document.getElementById("note").value.trim();
+  const emailValida = email === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  let ok = true;
+  ok = validateField("nome", nome.length > 0) && ok;
+  ok = validateField("telefono", telefono.length >= 6) && ok;
+  ok = validateField("email", emailValida) && ok;
+  ok = validateField("giorno", giorno !== "") && ok;
+  ok = validateField("orario", orario !== "") && ok;
+  if (!ok) return;
+
+  const ids = Object.keys(cart).filter(id => cart[id].qty > 0);
+  let total = 0;
+  let righeOrdine = ids.map(id => {
+    const item = cart[id];
+    if (!item.customPrice) total += item.qty * item.price;
+    return `${item.qty}x ${item.name}${item.customPrice ? " (prezzo da confermare)" : ""}`;
+  }).join("\n");
+
+  let messaggio = `Ciao! Vorrei ordinare:\n${righeOrdine}\n\nTotale prodotti a menu: ${formatPrice(total)}\n\nNome: ${nome}\nTelefono: ${telefono}`;
+  if (email) messaggio += `\nEmail: ${email}`;
+  messaggio += `\nRitiro: ${giornoLabel} alle ${orario}`;
+  if (note) messaggio += `\nNote: ${note}`;
+
+  // Salvo l'ordine nell'archivio condiviso (non blocca l'apertura di WhatsApp)
+  pushOrderToBin({
+    id: "web_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
+    data: giorno,
+    orario: orario,
+    nome: nome,
+    telefono: telefono,
+    dettaglio: righeOrdine.replace(/\n/g, ", "),
+    note: note,
+    totale: total
+  });
+
+  upsellDone = false;
+  const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(messaggio)}`;
+  window.open(url, "_blank");
+
+  if (clubProfile && puntiClub > 0) {
+    setTimeout(() => {
+      alert(`Con questo ordine riceverai ${puntiClub} ${puntiClub === 1 ? "punto" : "punti"}.\n\nPer aggiungerli alla tua tessera, mostra il tuo QR Code alla cassa al momento del pagamento.`);
+    }, 300);
+  }
+});
+</script>
+
+</body>
+</html>
