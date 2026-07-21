@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#6d3c27">
+<title>Club del Borgo</title>
+<style>
+:root{
+  --brown:#6d3c27;--brown2:#8c563b;--cream:#fff9f1;--paper:#fffdf9;
+  --ink:#30241e;--muted:#77675e;--line:#eaded3;--green:#386348;
+  --gold:#d79a30;--red:#a94135;--shadow:0 22px 70px rgba(66,38,23,.18)
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);
+background:linear-gradient(160deg,#fffaf3 0%,#f3dfca 100%);min-height:100vh}
+button,input{font:inherit}button{cursor:pointer}
+.shell{width:min(1100px,calc(100% - 30px));margin:auto}
+header{height:72px;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:11px;font-weight:900}
+.logo{width:45px;height:45px;border-radius:50%;display:grid;place-items:center;background:var(--brown);color:white;font-size:1.35rem;box-shadow:0 8px 20px rgba(109,60,39,.22)}
+.brand small{display:block;color:var(--muted);font-weight:600;font-size:.73rem}
+.top-btn,.primary,.secondary,.text-btn{border:0;border-radius:999px;font-weight:900}
+.top-btn,.primary{background:var(--brown);color:white;box-shadow:0 10px 22px rgba(109,60,39,.22)}
+.top-btn{padding:12px 17px}.top-btn.logged{background:var(--green)}
+.primary{width:100%;padding:14px 18px}.secondary{width:100%;padding:13px 17px;background:#fff;border:1px solid var(--line);color:var(--brown)}
+.text-btn{background:transparent;color:var(--brown);padding:8px}
+.hero{min-height:calc(100vh - 125px);display:grid;grid-template-columns:1.08fr .92fr;gap:46px;align-items:center;padding:42px 0 70px}
+.eyebrow{display:inline-flex;align-items:center;gap:7px;background:#f2e2d3;color:var(--brown);border-radius:999px;padding:8px 12px;font-size:.78rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
+h1{font-family:Georgia,serif;font-size:clamp(3rem,7vw,6.2rem);line-height:.9;margin:20px 0 22px;letter-spacing:-.045em}
+.hero-copy>p{font-size:clamp(1.04rem,2vw,1.28rem);line-height:1.65;color:var(--muted);max-width:620px}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}.hero-actions button{width:auto;padding:15px 22px}
+.preview{background:rgba(255,253,249,.85);border:1px solid rgba(255,255,255,.8);border-radius:34px;padding:26px;box-shadow:var(--shadow);backdrop-filter:blur(14px);transform:rotate(1deg)}
+.card-top{display:flex;justify-content:space-between;align-items:center}.mini-logo{font-size:2rem}.card-label{font-size:.78rem;color:var(--muted);font-weight:800}
+.fake-points{font-size:4.7rem;font-weight:950;margin:28px 0 0}.fake-points span{font-size:1rem;color:var(--muted);font-weight:800}
+.progress{height:13px;border-radius:99px;background:#eaded3;overflow:hidden}.progress i{display:block;height:100%;width:57%;background:linear-gradient(90deg,var(--brown),var(--gold))}
+.reward-preview{margin-top:20px;padding:17px;border-radius:20px;background:#f8eee4}.reward-preview strong{display:block;margin-bottom:4px}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:30px}
+.quick button{border:1px solid var(--line);background:rgba(255,255,255,.72);padding:18px 12px;border-radius:20px;font-weight:850;color:var(--ink)}
+footer{padding:20px 0 30px;color:var(--muted);font-size:.83rem;display:flex;justify-content:space-between;gap:15px}
+footer button{border:0;background:none;color:var(--muted);text-decoration:underline}
+
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(29,17,11,.68);display:none;align-items:center;justify-content:center;padding:16px;z-index:2000;backdrop-filter:blur(8px)}
+.overlay.open{display:flex}.modal{width:min(570px,100%);max-height:92vh;overflow:auto;background:var(--paper);border-radius:28px;box-shadow:0 35px 100px rgba(0,0,0,.35);position:relative}
+.modal.wide{width:min(980px,100%)}.modal-pad{padding:30px}
+.close{position:sticky;top:12px;float:right;margin:12px 12px -54px 0;width:42px;height:42px;border-radius:50%;background:white;border:1px solid var(--line);font-size:1.4rem;z-index:5}
+.view{display:none}.view.active{display:block}
+.modal h2{font-family:Georgia,serif;font-size:2rem;margin:10px 0}.modal p{color:var(--muted);line-height:1.55}
+.choice-grid{display:grid;gap:12px;margin-top:22px}
+.choice{border:1px solid var(--line);border-radius:22px;padding:21px;background:#fff;text-align:left}
+.choice strong{display:block;font-size:1.12rem;margin-bottom:5px}.choice span{color:var(--muted)}
+label{display:block;font-weight:850;margin:15px 0 7px}
+input{width:100%;border:1px solid var(--line);border-radius:14px;padding:13px 14px;background:#fff;outline:none}
+input:focus{border-color:var(--brown);box-shadow:0 0 0 3px rgba(109,60,39,.1)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.check{display:flex;align-items:flex-start;gap:10px;margin-top:14px;color:var(--muted);font-size:.88rem;line-height:1.4}.check input{width:auto;margin-top:3px}
+.notice{display:none;margin-top:13px;padding:11px 13px;border-radius:12px;font-weight:750}.notice.ok{display:block;background:#e6f3e9;color:#285336}.notice.err{display:block;background:#f9e6e2;color:#85372f}
+.back{display:inline-flex;margin-bottom:8px;border:0;background:none;color:var(--brown);font-weight:850;padding:0}
+.dashboard-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}.points{text-align:center;background:var(--brown);color:#fff;border-radius:22px;padding:15px 20px;min-width:115px}.points strong{font-size:2.4rem;display:block;line-height:1}.points small{font-weight:850}
+.reward-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px}.reward{padding:14px;border:1px solid var(--line);border-radius:17px;background:#fff;color:var(--muted);font-size:.83rem}.reward strong{display:block;color:var(--ink);margin-bottom:5px}.reward.available{background:#e9f4eb;border-color:#bad2bf}
+.history{list-style:none;padding:0;margin:15px 0 0}.history li{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.history small{color:var(--muted)}
+.legal{font-size:.9rem;line-height:1.55}.legal h3{margin-top:22px}.legal-highlight{background:#fff1c9;border-left:5px solid var(--gold);padding:14px;border-radius:10px}
+.staff-layout{display:grid;grid-template-columns:330px 1fr;gap:18px}.panel{border:1px solid var(--line);background:#fff;border-radius:20px;padding:18px}
+.customer-list{max-height:56vh;overflow:auto;margin-top:12px}.customer-item{padding:12px;border-bottom:1px solid var(--line);cursor:pointer}.customer-item:hover{background:#faf2ea}.badge{display:inline-block;background:#f2e2d3;color:var(--brown);border-radius:99px;padding:4px 8px;font-size:.75rem;font-weight:850;margin-top:5px}
+.staff-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}.staff-actions button{border:1px solid var(--line);background:white;padding:10px 12px;border-radius:12px;font-weight:800}.staff-actions .brown{background:var(--brown);color:white}.staff-actions button:disabled{opacity:.4}
+@media(max-width:780px){
+  header{height:64px}.brand small{display:none}.hero{grid-template-columns:1fr;min-height:auto;padding:45px 0}.preview{transform:none}.quick{grid-template-columns:1fr}.form-row,.reward-grid,.staff-layout{grid-template-columns:1fr}.modal{border-radius:25px 25px 0 0;max-height:95vh}.overlay{align-items:flex-end;padding:0}.modal-pad{padding:25px 18px calc(25px + env(safe-area-inset-bottom))}footer{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<header class="shell">
+  <div class="brand"><span class="logo">🥙</span><span>Club del Borgo<small>La Piadina del Borgo</small></span></div>
+  <button id="topMemberBtn" class="top-btn">👤 La mia tessera</button>
+</header>
+
+<main class="shell hero">
+  <section class="hero-copy">
+    <span class="eyebrow">⭐ La tua fedeltà viene premiata</span>
+    <h1>Club<br>del Borgo</h1>
+    <p>Entra nella tua tessera digitale, controlla i punti e scopri quanto manca al prossimo premio. Tutto in pochi secondi, direttamente dal telefono.</p>
+    <div class="hero-actions">
+      <button id="heroMemberBtn" class="primary">👤 La mia tessera</button>
+      <button id="heroSignupBtn" class="secondary">✨ Iscriviti al Club</button>
+    </div>
+    <div class="quick">
+      <button data-info="rewards">🎁 Premi</button>
+      <button data-info="how">⭐ Come funziona</button>
+      <button data-info="rules">ℹ️ Regolamento</button>
+    </div>
+  </section>
+
+  <aside class="preview" aria-label="Anteprima tessera">
+    <div class="card-top"><div><div class="card-label">CLUB DEL BORGO</div><strong>La tua tessera digitale</strong></div><div class="mini-logo">🥙</div></div>
+    <div class="fake-points">17 <span>punti</span></div>
+    <div class="progress"><i></i></div>
+    <p style="color:var(--muted)">Ti mancano 3 punti per il prossimo premio.</p>
+    <div class="reward-preview"><strong>🎁 Prossimo premio</strong>Mini crescione alla Nutella</div>
+  </aside>
+</main>
+
+<footer class="shell">
+  <span>© La Piadina del Borgo · Borgo Paglia, Cesena</span>
+  <button id="staffEntry">Accesso personale</button>
+</footer>
+
+<!-- MEMBER MODAL -->
+<div id="memberOverlay" class="overlay">
+  <div class="modal">
+    <button class="close" data-close="memberOverlay">×</button>
+    <div class="modal-pad">
+      <section id="memberChoice" class="view active">
+        <span class="eyebrow">La tua tessera digitale</span>
+        <h2>Benvenuto nel Club</h2>
+        <p>Scegli come proseguire.</p>
+        <div class="choice-grid">
+          <button class="choice" data-member-view="login"><strong>👤 Accedi</strong><span>Ho già una tessera del Club del Borgo.</span></button>
+          <button class="choice" data-member-view="signup"><strong>✨ Iscriviti</strong><span>Creo gratuitamente la mia tessera digitale.</span></button>
+        </div>
+      </section>
+
+      <section id="memberLogin" class="view">
+        <button class="back" data-member-view="choice">← Indietro</button>
+        <h2>Accedi alla tua tessera</h2>
+        <p>Usa gli stessi dati inseriti durante l’iscrizione.</p>
+        <form id="loginForm">
+          <label for="loginIdentifier">Telefono oppure e-mail</label><input id="loginIdentifier" required autocomplete="username">
+          <label for="loginPin">PIN personale</label><input id="loginPin" required type="password" inputmode="numeric" minlength="4" maxlength="4" pattern="[0-9]{4}" placeholder="4 cifre">
+          <button class="primary" style="margin-top:18px">Entra nella mia tessera</button>
+          <div id="loginNotice" class="notice"></div>
+        </form>
+        <button class="text-btn" data-member-view="signup" style="width:100%;margin-top:9px">Non sei iscritto? Crea la tessera</button>
+      </section>
+
+      <section id="memberSignup" class="view">
+        <button class="back" data-member-view="choice">← Indietro</button>
+        <h2>Crea la tua tessera</h2>
+        <p>Telefono ed e-mail sono obbligatori e serviranno per accedere alla tua area personale.</p>
+        <form id="signupForm">
+          <label for="signupName">Nome e cognome</label><input id="signupName" required autocomplete="name">
+          <div class="form-row">
+            <div><label for="signupPhone">Numero di telefono *</label><input id="signupPhone" required inputmode="tel" autocomplete="tel" minlength="9"></div>
+            <div><label for="signupEmail">E-mail *</label><input id="signupEmail" required type="email" autocomplete="email"></div>
+          </div>
+          <label for="signupPin">Scegli un PIN personale *</label><input id="signupPin" required type="password" inputmode="numeric" minlength="4" maxlength="4" pattern="[0-9]{4}" placeholder="4 cifre">
+          <label class="check"><input id="privacyCheck" type="checkbox" required><span>Dichiaro di aver letto l’informativa privacy sul trattamento dei dati personali.</span></label>
+          <label class="check"><input id="rulesCheck" type="checkbox" required><span>Accetto il regolamento del Club, inclusa la regola sugli orari di assegnazione punti.</span></label>
+          <button id="openLegal" type="button" class="text-btn">Leggi privacy e regolamento completo</button>
+          <button class="primary" style="margin-top:9px">Crea la mia tessera</button>
+          <div id="signupNotice" class="notice"></div>
+        </form>
+      </section>
+
+      <section id="memberDashboard" class="view">
+        <div class="dashboard-head">
+          <div><span class="eyebrow">La tua area personale</span><h2 id="greeting">Ciao!</h2><p id="nextReward"></p></div>
+          <div class="points"><strong id="pointTotal">0</strong><small>punti</small></div>
+        </div>
+        <div class="progress"><i id="memberProgress" style="width:0"></i></div>
+        <p id="progressText"></p>
+        <div class="reward-grid">
+          <div id="reward10" class="reward"><strong>10 punti</strong>Carasao</div>
+          <div id="reward20" class="reward"><strong>20 punti</strong>Mini Nutella</div>
+          <div id="reward30" class="reward"><strong>30 punti</strong>Squacquerone e rucola</div>
+        </div>
+        <h3 style="margin-top:25px">Ultimi movimenti</h3><ul id="memberHistory" class="history"></ul>
+        <button id="logoutBtn" class="secondary" style="margin-top:20px">Esci dalla tessera</button>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- INFO MODAL -->
+<div id="infoOverlay" class="overlay">
+  <div class="modal">
+    <button class="close" data-close="infoOverlay">×</button>
+    <div id="infoContent" class="modal-pad"></div>
+  </div>
+</div>
+
+<!-- LEGAL MODAL -->
+<div id="legalOverlay" class="overlay">
+  <div class="modal">
+    <button class="close" data-close="legalOverlay">×</button>
+    <div class="modal-pad legal">
+      <span class="eyebrow">Informativa e regolamento</span>
+      <h2>Club del Borgo</h2>
+      <h3>Informativa privacy</h3>
+      <p>I dati forniti — nome, telefono ed e-mail — sono utilizzati esclusivamente per creare, identificare e gestire la tessera fedeltà, aggiornare il saldo punti e permettere l’accesso all’area personale. Non vengono ceduti a terzi per finalità commerciali.</p>
+      <p>L’interessato può chiedere accesso, rettifica o cancellazione dei propri dati rivolgendosi direttamente a La Piadina del Borgo.</p>
+      <h3>Regolamento</h3>
+      <p>Viene assegnato 1 punto ogni 10 € di spesa. I premi sono disponibili alle soglie di 10, 20 e 30 punti. Il bonus recensione Google vale 3 punti ed è assegnabile una sola volta previa verifica dello staff.</p>
+      <div class="legal-highlight"><strong>Regola sugli orari</strong><br>I punti vengono assegnati esclusivamente quando sia l’ordine sia il ritiro avvengono tra le 16:00 e le 18:30.</div>
+      <button id="acceptLegal" class="primary" style="margin-top:20px">Accetta e continua</button>
+    </div>
+  </div>
+</div>
+
+<!-- STAFF MODAL -->
+<div id="staffOverlay" class="overlay">
+  <div class="modal wide">
+    <button class="close" data-close="staffOverlay">×</button>
+    <div class="modal-pad">
+      <section id="staffLoginView">
+        <span class="eyebrow">Area riservata</span><h2>Accesso personale</h2>
+        <div style="max-width:380px">
+          <label for="staffCode">Codice personale</label><input id="staffCode" type="password" inputmode="numeric">
+          <button id="staffLoginBtn" class="primary" style="margin-top:15px">Entra</button>
+          <div id="staffNotice" class="notice"></div>
+        </div>
+      </section>
+      <section id="staffPanelView" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><span class="eyebrow">Gestione Club</span><h2>Pannello staff</h2></div><button id="staffLogout" class="secondary" style="width:auto">Esci</button></div>
+        <div class="staff-layout">
+          <div class="panel"><label for="staffSearch">Cerca cliente</label><input id="staffSearch" placeholder="Nome, telefono o e-mail"><div id="customerList" class="customer-list"></div></div>
+          <div id="customerDetail" class="panel"><p style="color:var(--muted)">Seleziona un cliente dall’elenco.</p></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://tvkgqjcqkuznhyibmbxa.supabase.co";
+const SUPABASE_KEY="sb_publishable_WgQnBhhG-KzZRlhMkll9pQ_4URygKjy";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let currentProfile=null,selectedCustomerId=null;
+const $=id=>document.getElementById(id), norm=v=>String(v||"").trim().toLowerCase(), digits=v=>String(v||"").replace(/\D/g,"");
+const esc=v=>String(v||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+const pw=pin=>"ClubDelBorgo#"+pin;
+function notice(id,msg,ok){const e=$(id);e.textContent=msg;e.className="notice "+(ok?"ok":"err")}
+function openOverlay(id){$(id).classList.add("open");document.body.style.overflow="hidden"}
+function closeOverlay(id){$(id).classList.remove("open");document.body.style.overflow=""}
+document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>closeOverlay(b.dataset.close));
+document.querySelectorAll(".overlay").forEach(o=>o.onclick=e=>{if(e.target===o)closeOverlay(o.id)});
+function setMemberView(v){["memberChoice","memberLogin","memberSignup","memberDashboard"].forEach(id=>$(id).classList.remove("active"));$({choice:"memberChoice",login:"memberLogin",signup:"memberSignup",dashboard:"memberDashboard"}[v]).classList.add("active")}
+document.querySelectorAll("[data-member-view]").forEach(b=>b.onclick=()=>setMemberView(b.dataset.memberView));
+
+async function loadProfile(){
+ const {data:{user}}=await db.auth.getUser(); if(!user){currentProfile=null;return null}
+ const {data,error}=await db.from("profiles").select("*").eq("id",user.id).single();
+ if(error){console.error(error);return null} currentProfile=data; return data
+}
+function updateTop(){const b=$("topMemberBtn");b.textContent=currentProfile?"👋 Ciao "+(currentProfile.full_name||"Cliente").split(" ")[0]:"👤 La mia tessera";b.classList.toggle("logged",!!currentProfile)}
+async function openMember(pref){openOverlay("memberOverlay");const {data:{session}}=await db.auth.getSession();if(session){const p=await loadProfile();p?renderDashboard(p):setMemberView("login")}else setMemberView(pref||"choice")}
+$("topMemberBtn").onclick=()=>openMember();$("heroMemberBtn").onclick=()=>openMember();$("heroSignupBtn").onclick=()=>openMember("signup");
+
+$("signupForm").onsubmit=async e=>{
+ e.preventDefault();const name=$("signupName").value.trim(),phone=digits($("signupPhone").value),email=norm($("signupEmail").value),pin=$("signupPin").value.trim();
+ if(phone.length<9)return notice("signupNotice","Numero non valido.",false);
+ if(!/^\d{4}$/.test(pin))return notice("signupNotice","Il PIN deve avere 4 cifre.",false);
+ if(!$("privacyCheck").checked||!$("rulesCheck").checked)return notice("signupNotice","Accetta privacy e regolamento.",false);
+ const {data,error}=await db.auth.signUp({email,password:pw(pin),options:{data:{full_name:name,phone,email,privacy_accepted:true,rules_accepted:true}}});
+ if(error)return notice("signupNotice",error.message,false);
+ if(!data.session)return notice("signupNotice","Tessera creata. Conferma l’e-mail e poi accedi.",true);
+ await loadProfile();updateTop();renderDashboard(currentProfile)
+};
+
+$("loginForm").onsubmit=async e=>{
+ e.preventDefault();let id=norm($("loginIdentifier").value),pin=$("loginPin").value.trim(),email=id;
+ if(!/^\d{4}$/.test(pin))return notice("loginNotice","Inserisci il PIN di 4 cifre.",false);
+ if(!id.includes("@")){const {data,error}=await db.rpc("resolve_login_email",{p_phone:digits(id)});if(error||!data)return notice("loginNotice","Tessera non trovata.",false);email=data}
+ const {error}=await db.auth.signInWithPassword({email,password:pw(pin)});
+ if(error)return notice("loginNotice","Telefono/e-mail o PIN non corretti.",false);
+ await loadProfile();updateTop();renderDashboard(currentProfile)
+};
+
+function nextReward(p){if(p<10)return{target:10,name:"il Carasao"};if(p<20)return{target:20,name:"il Mini crescione alla Nutella"};return{target:30,name:"la piadina squacquerone e rucola"}}
+async function renderDashboard(c){
+ setMemberView("dashboard");const p=Number(c.points)||0,n=nextReward(p);
+ $("greeting").textContent="Ciao "+(c.full_name||"").split(" ")[0]+" 👋";$("pointTotal").textContent=p;
+ if(p>=30){$("nextReward").textContent="Hai raggiunto il premio da 30 punti.";$("progressText").textContent="Puoi riscattarlo con lo staff.";$("memberProgress").style.width="100%"}
+ else{$("nextReward").textContent="Ti mancano "+(n.target-p)+" punti per "+n.name+".";$("progressText").textContent=p+" / "+n.target+" punti";$("memberProgress").style.width=Math.min(100,p/n.target*100)+"%"}
+ [10,20,30].forEach(v=>$("reward"+v).classList.toggle("available",p>=v));
+ const {data:h}=await db.from("point_movements").select("*").eq("customer_id",c.id).order("created_at",{ascending:false}).limit(12);
+ $("memberHistory").innerHTML=h?.length?h.map(x=>`<li><span><strong>${esc(x.description)}</strong><br><small>${new Date(x.created_at).toLocaleString("it-IT")}</small></span><strong>${x.delta>0?"+"+x.delta:x.delta}</strong></li>`).join(""):"<li>Nessun movimento registrato.</li>"
+}
+$("logoutBtn").onclick=async()=>{await db.auth.signOut();currentProfile=null;updateTop();setMemberView("choice")};
+$("openLegal").onclick=()=>openOverlay("legalOverlay");$("acceptLegal").onclick=()=>{$("privacyCheck").checked=true;$("rulesCheck").checked=true;closeOverlay("legalOverlay")};
+
+const infos={rewards:`<span class="eyebrow">I premi</span><h2>Ogni punto ti avvicina a qualcosa di buono</h2><div class="reward-grid"><div class="reward available"><strong>10 punti</strong>Sacchetto di Carasao</div><div class="reward available"><strong>20 punti</strong>Mini crescione alla Nutella</div><div class="reward available"><strong>30 punti</strong>Piadina squacquerone e rucola</div></div>`,how:`<span class="eyebrow">Come funziona</span><h2>Semplice e digitale</h2><p><strong>1.</strong> Iscriviti con nome, telefono, e-mail e PIN.</p><p><strong>2.</strong> Ottieni 1 punto ogni 10 €.</p><p><strong>3.</strong> Controlla punti, premi e storico.</p>`,rules:`<span class="eyebrow">Regolamento</span><h2>Le regole principali</h2><p>1 punto ogni 10 € di spesa. Bonus recensione: 3 punti una volta.</p><div class="legal-highlight"><strong>Importante</strong><br>Ordine e ritiro tra le 16:00 e le 18:30.</div>`};
+document.querySelectorAll("[data-info]").forEach(b=>b.onclick=()=>{$("infoContent").innerHTML=infos[b.dataset.info];openOverlay("infoOverlay")});
+
+/* Staff: richiede accesso cliente già effettuato con profilo role=staff/admin */
+$("staffEntry").onclick=()=>{openOverlay("staffOverlay");$("staffLoginView").style.display="block";$("staffPanelView").style.display="none"};
+$("staffLoginBtn").onclick=async()=>{if($("staffCode").value.trim()!=="32-89")return notice("staffNotice","Codice errato.",false);const p=await loadProfile();if(!p||!["staff","admin"].includes(p.role))return notice("staffNotice","Accedi prima con l’account staff.",false);$("staffLoginView").style.display="none";$("staffPanelView").style.display="block";renderList()};
+$("staffLogout").onclick=()=>closeOverlay("staffOverlay");$("staffSearch").oninput=()=>renderList($("staffSearch").value);
+async function renderList(f=""){let q=db.from("profiles").select("*").eq("role","customer").order("full_name");if(f)q=q.or(`full_name.ilike.%${norm(f)}%,email.ilike.%${norm(f)}%,phone.ilike.%${digits(f)}%`);const {data:l,error}=await q;if(error)return $("customerList").innerHTML="<p>Errore caricamento.</p>";$("customerList").innerHTML=l.length?l.map(c=>`<div class="customer-item" onclick="selectCustomer('${c.id}')"><strong>${esc(c.full_name)}</strong><br><small>${esc(c.phone)} · ${esc(c.email)}</small><br><span class="badge">${c.points} punti</span></div>`).join(""):"<p>Nessun cliente.</p>"}
+window.selectCustomer=async id=>{selectedCustomerId=id;renderDetail()};
+async function renderDetail(){const {data:c}=await db.from("profiles").select("*").eq("id",selectedCustomerId).single();const {data:h}=await db.from("point_movements").select("*").eq("customer_id",selectedCustomerId).order("created_at",{ascending:false}).limit(20);$("customerDetail").innerHTML=`<h2>${esc(c.full_name)}</h2><p>${esc(c.phone)}<br>${esc(c.email)}</p><div class="points" style="display:inline-block"><strong>${c.points}</strong><small>punti</small></div><div class="staff-actions"><input id="amount" type="number" min="0" step=".01" placeholder="Importo €" style="max-width:160px"><button class="brown" onclick="addAmount()">Aggiungi da importo</button><button onclick="adjust(1)">+1</button><button onclick="adjust(-1)">−1</button><button onclick="reviewBonus()" ${c.review_bonus_used?"disabled":""}>+3 recensione</button></div><div class="staff-actions"><button onclick="redeem('carasao')" ${c.points<10?"disabled":""}>Riscatta 10</button><button onclick="redeem('mini-nutella')" ${c.points<20?"disabled":""}>Riscatta 20</button><button onclick="redeem('squacquerone-rucola')" ${c.points<30?"disabled":""}>Riscatta 30</button></div><h3>Storico</h3><ul class="history">${h?.map(x=>`<li><span>${esc(x.description)}<br><small>${new Date(x.created_at).toLocaleString("it-IT")}</small></span><strong>${x.delta}</strong></li>`).join("")||""}</ul>`}
+async function refresh(){await renderDetail();await renderList($("staffSearch").value)}
+window.adjust=async d=>{const {error}=await db.rpc("staff_adjust_points",{p_customer_id:selectedCustomerId,p_delta:d,p_note:"Correzione manuale"});if(error)return alert(error.message);refresh()};
+window.addAmount=async()=>{const a=Number($("amount").value);const now=new Date().toISOString();const {error}=await db.rpc("staff_add_purchase_points",{p_customer_id:selectedCustomerId,p_purchase_amount:a,p_order_at:now,p_pickup_at:now});if(error)return alert(error.message);refresh()};
+window.reviewBonus=async()=>{const {error}=await db.rpc("staff_add_review_bonus",{p_customer_id:selectedCustomerId});if(error)return alert(error.message);refresh()};
+window.redeem=async code=>{const {error}=await db.rpc("staff_redeem_reward",{p_customer_id:selectedCustomerId,p_reward_code:code});if(error)return alert(error.message);refresh()};
+db.auth.onAuthStateChange(async(_,s)=>{if(s)await loadProfile();else currentProfile=null;updateTop()});
+(async()=>{await loadProfile();updateTop()})();
+</script>
+</body>
+</html>
