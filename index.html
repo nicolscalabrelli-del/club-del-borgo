@@ -64,6 +64,14 @@ input:focus{border-color:var(--brown);box-shadow:0 0 0 3px rgba(109,60,39,.1)}
 .staff-layout{display:grid;grid-template-columns:330px 1fr;gap:18px}.panel{border:1px solid var(--line);background:#fff;border-radius:20px;padding:18px}
 .customer-list{max-height:56vh;overflow:auto;margin-top:12px}.customer-item{padding:12px;border-bottom:1px solid var(--line);cursor:pointer}.customer-item:hover{background:#faf2ea}.badge{display:inline-block;background:#f2e2d3;color:var(--brown);border-radius:99px;padding:4px 8px;font-size:.75rem;font-weight:850;margin-top:5px}
 .staff-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}.staff-actions button{border:1px solid var(--line);background:white;padding:10px 12px;border-radius:12px;font-weight:800}.staff-actions .brown{background:var(--brown);color:white}.staff-actions button:disabled{opacity:.4}
+.qr-card{margin-top:22px;padding:20px;border:1px solid var(--line);border-radius:20px;background:#fff;text-align:center}
+.qr-card h3{margin:0 0 8px}
+#memberQr{display:flex;justify-content:center;margin:16px auto 10px}
+.qr-code-text{font-size:.78rem;color:var(--muted);word-break:break-word}
+.scanner-box{margin-bottom:18px;padding:16px;border:1px solid var(--line);border-radius:20px;background:#fff}
+.scanner-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+#qr-reader{width:100%;margin-top:12px;overflow:hidden;border-radius:14px}
+
 @media(max-width:780px){
   header{height:64px}.brand small{display:none}.hero{grid-template-columns:1fr;min-height:auto;padding:45px 0}.preview{transform:none}.quick{grid-template-columns:1fr}.form-row,.reward-grid,.staff-layout{grid-template-columns:1fr}.modal{border-radius:25px 25px 0 0;max-height:95vh}.overlay{align-items:flex-end;padding:0}.modal-pad{padding:25px 18px calc(25px + env(safe-area-inset-bottom))}footer{flex-direction:column}
 }
@@ -164,6 +172,12 @@ input:focus{border-color:var(--brown);box-shadow:0 0 0 3px rgba(109,60,39,.1)}
           <div id="reward20" class="reward"><strong>20 punti</strong>Mini Nutella</div>
           <div id="reward30" class="reward"><strong>30 punti</strong>Squacquerone e rucola</div>
         </div>
+        <div class="qr-card">
+          <h3>Il tuo QR personale</h3>
+          <p>Mostralo allo staff per aprire subito la tua tessera.</p>
+          <div id="memberQr"></div>
+          <div id="memberQrCode" class="qr-code-text"></div>
+        </div>
         <h3 style="margin-top:25px">Ultimi movimenti</h3><ul id="memberHistory" class="history"></ul>
         <button id="logoutBtn" class="secondary" style="margin-top:20px">Esci dalla tessera</button>
       </section>
@@ -212,6 +226,16 @@ input:focus{border-color:var(--brown);box-shadow:0 0 0 3px rgba(109,60,39,.1)}
       </section>
       <section id="staffPanelView" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><span class="eyebrow">Gestione Club</span><h2>Pannello staff</h2></div><button id="staffLogout" class="secondary" style="width:auto">Esci</button></div>
+        <div class="scanner-box">
+          <strong>Scansiona il QR del cliente</strong>
+          <p style="margin:6px 0 10px;color:var(--muted)">Apri la fotocamera e inquadra il QR della tessera.</p>
+          <div class="scanner-actions">
+            <button id="startScannerBtn" class="primary" style="width:auto">📷 Avvia scanner</button>
+            <button id="stopScannerBtn" class="secondary" style="width:auto;display:none">Ferma scanner</button>
+          </div>
+          <div id="qr-reader" style="display:none"></div>
+          <div id="scannerNotice" class="notice"></div>
+        </div>
         <div class="staff-layout">
           <div class="panel"><label for="staffSearch">Cerca cliente</label><input id="staffSearch" placeholder="Nome, telefono o e-mail"><div id="customerList" class="customer-list"></div></div>
           <div id="customerDetail" class="panel"><p style="color:var(--muted)">Seleziona un cliente dall’elenco.</p></div>
@@ -222,11 +246,15 @@ input:focus{border-color:var(--brown);box-shadow:0 0 0 3px rgba(109,60,39,.1)}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <script>
 const SUPABASE_URL="https://tvkgqjcqkuznhyibmbxa.supabase.co";
 const SUPABASE_KEY="sb_publishable_WgQnBhhG-KzZRlhMkll9pQ_4URygKjy";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let currentProfile=null,selectedCustomerId=null;
+let qrScanner=null,scannerRunning=false;
+const QR_PREFIX="club-del-borgo:";
 const $=id=>document.getElementById(id), norm=v=>String(v||"").trim().toLowerCase(), digits=v=>String(v||"").replace(/\D/g,"");
 const esc=v=>String(v||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 const pw=pin=>"ClubDelBorgo#"+pin;
@@ -274,6 +302,19 @@ async function renderDashboard(c){
  if(p>=30){$("nextReward").textContent="Hai raggiunto il premio da 30 punti.";$("progressText").textContent="Puoi riscattarlo con lo staff.";$("memberProgress").style.width="100%"}
  else{$("nextReward").textContent="Ti mancano "+(n.target-p)+" punti per "+n.name+".";$("progressText").textContent=p+" / "+n.target+" punti";$("memberProgress").style.width=Math.min(100,p/n.target*100)+"%"}
  [10,20,30].forEach(v=>$("reward"+v).classList.toggle("available",p>=v));
+ const qrToken=c.public_token;
+ $("memberQr").innerHTML="";
+ if(qrToken){
+  new QRCode($("memberQr"),{
+   text:QR_PREFIX+qrToken,
+   width:190,
+   height:190,
+   correctLevel:QRCode.CorrectLevel.M
+  });
+  $("memberQrCode").textContent="Codice tessera: "+qrToken;
+ }else{
+  $("memberQrCode").textContent="QR non ancora disponibile.";
+ }
  const {data:h}=await db.from("point_movements").select("*").eq("customer_id",c.id).order("created_at",{ascending:false}).limit(12);
  $("memberHistory").innerHTML=h?.length?h.map(x=>`<li><span><strong>${esc(x.description)}</strong><br><small>${new Date(x.created_at).toLocaleString("it-IT")}</small></span><strong>${x.delta>0?"+"+x.delta:x.delta}</strong></li>`).join(""):"<li>Nessun movimento registrato.</li>"
 }
@@ -286,7 +327,71 @@ document.querySelectorAll("[data-info]").forEach(b=>b.onclick=()=>{$("infoConten
 /* Staff: richiede accesso cliente già effettuato con profilo role=staff/admin */
 $("staffEntry").onclick=()=>{openOverlay("staffOverlay");$("staffLoginView").style.display="block";$("staffPanelView").style.display="none"};
 $("staffLoginBtn").onclick=async()=>{if($("staffCode").value.trim()!=="32-89")return notice("staffNotice","Codice errato.",false);const p=await loadProfile();if(!p||!["staff","admin"].includes(p.role))return notice("staffNotice","Accedi prima con l’account staff.",false);$("staffLoginView").style.display="none";$("staffPanelView").style.display="block";renderList()};
-$("staffLogout").onclick=()=>closeOverlay("staffOverlay");$("staffSearch").oninput=()=>renderList($("staffSearch").value);
+$("staffLogout").onclick=async()=>{await stopScanner();closeOverlay("staffOverlay")};
+$("staffSearch").oninput=()=>renderList($("staffSearch").value);
+
+async function stopScanner(){
+ if(qrScanner && scannerRunning){
+  try{await qrScanner.stop()}catch(e){console.warn(e)}
+  try{await qrScanner.clear()}catch(e){console.warn(e)}
+ }
+ scannerRunning=false;
+ $("qr-reader").style.display="none";
+ $("startScannerBtn").style.display="inline-block";
+ $("stopScannerBtn").style.display="none";
+}
+
+async function handleQr(decodedText){
+ if(!decodedText.startsWith(QR_PREFIX)){
+  notice("scannerNotice","Questo QR non appartiene al Club del Borgo.",false);
+  return;
+ }
+ const token=decodedText.slice(QR_PREFIX.length).trim();
+ const {data,error}=await db.from("profiles")
+  .select("id")
+  .eq("public_token",token)
+  .eq("role","customer")
+  .single();
+
+ if(error||!data){
+  notice("scannerNotice","Cliente non trovato.",false);
+  return;
+ }
+
+ await stopScanner();
+ selectedCustomerId=data.id;
+ await renderDetail();
+ notice("scannerNotice","Cliente trovato.",true);
+}
+
+async function startScanner(){
+ if(scannerRunning)return;
+ $("scannerNotice").className="notice";
+ $("qr-reader").style.display="block";
+ $("startScannerBtn").style.display="none";
+ $("stopScannerBtn").style.display="inline-block";
+
+ qrScanner=new Html5Qrcode("qr-reader");
+
+ try{
+  scannerRunning=true;
+  await qrScanner.start(
+   {facingMode:"environment"},
+   {fps:10,qrbox:{width:240,height:240}},
+   async decodedText=>await handleQr(decodedText),
+   ()=>{}
+  );
+ }catch(err){
+  scannerRunning=false;
+  $("qr-reader").style.display="none";
+  $("startScannerBtn").style.display="inline-block";
+  $("stopScannerBtn").style.display="none";
+  notice("scannerNotice","Non riesco ad aprire la fotocamera. Controlla i permessi del browser.",false);
+ }
+}
+
+$("startScannerBtn").onclick=startScanner;
+$("stopScannerBtn").onclick=stopScanner;
 async function renderList(f=""){let q=db.from("profiles").select("*").eq("role","customer").order("full_name");if(f)q=q.or(`full_name.ilike.%${norm(f)}%,email.ilike.%${norm(f)}%,phone.ilike.%${digits(f)}%`);const {data:l,error}=await q;if(error)return $("customerList").innerHTML="<p>Errore caricamento.</p>";$("customerList").innerHTML=l.length?l.map(c=>`<div class="customer-item" onclick="selectCustomer('${c.id}')"><strong>${esc(c.full_name)}</strong><br><small>${esc(c.phone)} · ${esc(c.email)}</small><br><span class="badge">${c.points} punti</span></div>`).join(""):"<p>Nessun cliente.</p>"}
 window.selectCustomer=async id=>{selectedCustomerId=id;renderDetail()};
 async function renderDetail(){const {data:c}=await db.from("profiles").select("*").eq("id",selectedCustomerId).single();const {data:h}=await db.from("point_movements").select("*").eq("customer_id",selectedCustomerId).order("created_at",{ascending:false}).limit(20);$("customerDetail").innerHTML=`<h2>${esc(c.full_name)}</h2><p>${esc(c.phone)}<br>${esc(c.email)}</p><div class="points" style="display:inline-block"><strong>${c.points}</strong><small>punti</small></div><div class="staff-actions"><input id="amount" type="number" min="0" step=".01" placeholder="Importo €" style="max-width:160px"><button class="brown" onclick="addAmount()">Aggiungi da importo</button><button onclick="adjust(1)">+1</button><button onclick="adjust(-1)">−1</button><button onclick="reviewBonus()" ${c.review_bonus_used?"disabled":""}>+3 recensione</button></div><div class="staff-actions"><button onclick="redeem('carasao')" ${c.points<10?"disabled":""}>Riscatta 10</button><button onclick="redeem('mini-nutella')" ${c.points<20?"disabled":""}>Riscatta 20</button><button onclick="redeem('squacquerone-rucola')" ${c.points<30?"disabled":""}>Riscatta 30</button></div><h3>Storico</h3><ul class="history">${h?.map(x=>`<li><span>${esc(x.description)}<br><small>${new Date(x.created_at).toLocaleString("it-IT")}</small></span><strong>${x.delta}</strong></li>`).join("")||""}</ul>`}
