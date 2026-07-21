@@ -724,8 +724,8 @@
         </div>
 
         <div class="club-form" id="clubLoginForm">
-          <input type="text" id="clubLoginIdentifier" autocomplete="username" placeholder="Telefono o e-mail">
-          <input type="password" id="clubLoginPin" inputmode="numeric" maxlength="4" autocomplete="current-password" placeholder="PIN di 4 cifre">
+          <input type="email" id="clubLoginIdentifier" autocomplete="username" placeholder="E-mail">
+          <input type="password" id="clubLoginPin" inputmode="numeric" maxlength="4" autocomplete="current-password" placeholder="Codice">
           <button type="button" class="club-btn primary" id="clubLoginBtn" style="width:100%">Accedi e collega l’ordine</button>
           <button type="button" class="club-btn link" data-club-back style="width:100%">Indietro</button>
           <div class="club-notice" id="clubLoginNotice"></div>
@@ -881,19 +881,28 @@ async function loadClubProfile() {
 }
 
 async function clubLogin() {
-  if (!clubDb) return clubNotice("clubLoginNotice", "Connessione al Club non disponibile.", false);
-  let identifier = clubNorm(document.getElementById("clubLoginIdentifier").value);
+  if (!clubDb)
+    return clubNotice("clubLoginNotice", "Connessione al Club non disponibile.", false);
+
+  const email = clubNorm(document.getElementById("clubLoginIdentifier").value);
   const pin = document.getElementById("clubLoginPin").value.trim();
-  if (!/^\d{4}$/.test(pin)) return clubNotice("clubLoginNotice", "Inserisci un PIN di 4 cifre.", false);
-  let email = identifier;
-  if (!identifier.includes("@")) {
-    const { data, error } = await clubDb.rpc("resolve_login_email", { p_phone: clubDigits(identifier) });
-    if (error || !data) return clubNotice("clubLoginNotice", "Tessera non trovata.", false);
-    email = data;
-  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    return clubNotice("clubLoginNotice", "Inserisci un'e-mail valida.", false);
+
+  if (!/^\d{4}$/.test(pin))
+    return clubNotice("clubLoginNotice", "Inserisci un codice di 4 cifre.", false);
+
   clubNotice("clubLoginNotice", "Accesso in corso…", true);
-  const { error } = await clubDb.auth.signInWithPassword({ email, password: clubPassword(pin) });
-  if (error) return clubNotice("clubLoginNotice", "Telefono/e-mail o PIN non corretti.", false);
+
+  const { error } = await clubDb.auth.signInWithPassword({
+    email,
+    password: clubPassword(pin)
+  });
+
+  if (error)
+    return clubNotice("clubLoginNotice", "E-mail o codice non corretti.", false);
+
   await loadClubProfile();
 }
 
@@ -912,7 +921,16 @@ async function clubSignup() {
   const { data, error } = await clubDb.auth.signUp({
     email,
     password: clubPassword(pin),
-    options: { data: { full_name, phone, email, privacy_accepted: true, rules_accepted: true } }
+    options: {
+      emailRedirectTo: "https://nicolscalabrelli-del.github.io/club-del-borgo/",
+      data: {
+        full_name,
+        phone,
+        email,
+        privacy_accepted: true,
+        rules_accepted: true
+      }
+    }
   });
   if (error) return clubNotice("clubSignupNotice", error.message, false);
   if (!data.session) return clubNotice("clubSignupNotice", "Tessera creata. Conferma l’e-mail e poi accedi.", true);
@@ -1010,13 +1028,6 @@ const MENU = {
       { name: "Zucca, mozzarella, gorgonzola, noci, salsa tartufata", price: 7.00 },
       { name: "Mozzarella, burrata, friarielli, salsiccia", price: 7.00 }
     ],
-    addons: { title: "Aggiunte e varianti", items: [
-      { name: "Aggiunta 1 ingrediente", price: 0.50 },
-      { name: "Tonno, porcini, tartufo o crudo", price: 1.00 },
-      { name: "Burrata", price: 1.00 },
-      { name: "Impasto integrale", price: 0.50 }
-    ]}
-  },
   "Crescioni Novità": {
     desc: "Le nostre proposte più recenti, con ingredienti speciali.",
     items: [
