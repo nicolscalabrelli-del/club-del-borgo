@@ -822,6 +822,28 @@ function fillCheckoutFromClub(profile) {
   document.getElementById("email").value = profile.email || "";
 }
 
+function getClubOrderTotal() {
+  return Object.keys(cart || {}).reduce((sum, id) => {
+    const item = cart[id];
+    if (!item || item.qty <= 0 || item.customPrice) return sum;
+    return sum + (item.qty * item.price);
+  }, 0);
+}
+
+function updateClubEarnedPoints() {
+  const el = document.getElementById("clubConnectedPoints");
+  if (!el) return;
+  const total = getClubOrderTotal();
+  const punti = Math.floor(total / 10);
+  if (punti > 0) {
+    el.textContent = `Con questo ordine riceverai ${punti} ${punti === 1 ? "punto" : "punti"}`;
+    el.style.display = "block";
+  } else {
+    el.textContent = "";
+    el.style.display = "none";
+  }
+}
+
 function renderClubState() {
   const gateway = document.getElementById("clubGateway");
   const connected = document.getElementById("clubConnected");
@@ -829,7 +851,7 @@ function renderClubState() {
     gateway.classList.add("hidden");
     connected.classList.add("visible");
     document.getElementById("clubConnectedName").textContent = "Ordine collegato a " + (clubProfile.full_name || "cliente");
-    document.getElementById("clubConnectedPoints").textContent = (Number(clubProfile.points) || 0) + " punti disponibili";
+    updateClubEarnedPoints();
     fillCheckoutFromClub(clubProfile);
   } else {
     connected.classList.remove("visible");
@@ -1682,12 +1704,17 @@ document.getElementById("configConfirmBtn").addEventListener("click", () => {
 function updateCartBar() {
   const ids = Object.keys(cart).filter(id => cart[id].qty > 0);
   const bar = document.getElementById("cartBar");
-  if (ids.length === 0) { bar.classList.remove("visible"); return; }
+  if (ids.length === 0) {
+    bar.classList.remove("visible");
+    updateClubEarnedPoints();
+    return;
+  }
   bar.classList.add("visible");
   let totalQty = 0, totalPrice = 0;
   ids.forEach(id => { totalQty += cart[id].qty; totalPrice += cart[id].qty * cart[id].price; });
   document.getElementById("cartInfo").textContent = totalQty + (totalQty === 1 ? " prodotto" : " prodotti");
   document.getElementById("cartTotal").textContent = formatPrice(totalPrice);
+  updateClubEarnedPoints();
 }
 
 function buildOrderSummary() {
@@ -2362,13 +2389,6 @@ document.getElementById("checkoutForm").addEventListener("submit", (e) => {
   const puntiClub = Math.floor(total / 10);
   const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(messaggio)}`;
   window.open(url, "_blank");
-
-      const puntiOrdine = Math.floor(total / 10);
-      if (clubProfile && puntiOrdine > 0) {
-        setTimeout(() => {
-          alert(`✅ Ordine ricevuto!\n\nHai speso ${formatPrice(total)}.\n\nCon questo ordine riceverai ${puntiOrdine} ${puntiOrdine === 1 ? "punto" : "punti"}.\n\nMostra il tuo QR Code alla cassa al momento del pagamento per farteli accreditare.`);
-        },300);
-      }
 
   if (clubProfile && puntiClub > 0) {
     setTimeout(() => {
