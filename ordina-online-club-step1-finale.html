@@ -2363,6 +2363,13 @@ document.getElementById("checkoutForm").addEventListener("submit", (e) => {
   const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(messaggio)}`;
   window.open(url, "_blank");
 
+      const puntiOrdine = Math.floor(total / 10);
+      if (clubProfile && puntiOrdine > 0) {
+        setTimeout(() => {
+          alert(`✅ Ordine ricevuto!\n\nHai speso ${formatPrice(total)}.\n\nCon questo ordine riceverai ${puntiOrdine} ${puntiOrdine === 1 ? "punto" : "punti"}.\n\nMostra il tuo QR Code alla cassa al momento del pagamento per farteli accreditare.`);
+        },300);
+      }
+
   if (clubProfile && puntiClub > 0) {
     setTimeout(() => {
       alert(`✅ Ordine ricevuto!\n\nHai speso ${formatPrice(total)}.\n\nCon questo ordine riceverai ${puntiClub} ${puntiClub === 1 ? "punto" : "punti"}.\n\n📱 Mostra il tuo QR Code alla cassa al momento del pagamento per aggiungerli alla tua tessera.`);
