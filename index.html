@@ -551,6 +551,16 @@
     border:1.5px solid var(--line); border-radius:14px; padding:16px;
     margin:0 0 20px; background:var(--cream);
   }
+  .club-points-banner{
+    background:#E8F7EA;
+    border:1px solid #7CC68D;
+    color:#1E5C2D;
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:14px;
+    font-size:.9rem;
+    line-height:1.45;
+}
   .club-box h3 { font-size:1.05rem; margin-bottom:4px; color:var(--brown); }
   .club-box p { font-size:.84rem; color:rgba(43,36,32,.62); margin-bottom:12px; }
   .club-actions { display:flex; gap:8px; flex-wrap:wrap; }
@@ -741,6 +751,11 @@
 
     <div class="club-box" id="clubBox">
       <div class="club-gateway" id="clubGateway">
+         <div class="club-points-banner">
+        🎁 <strong>Non perdere i punti di questo ordine!</strong><br>
+        Registrati gratuitamente e questo ordine ti farà guadagnare
+        <strong><span id="checkoutEarnedPoints">0</span> punti</strong>verso il tuo prossimo premio.
+    </div>
         <h3>Club del Borgo</h3>
         <p>Accedi o crea la tessera per collegare questo ordine al tuo profilo. Puoi anche ordinare senza tessera.</p>
         <div class="club-actions" id="clubChoiceActions">
@@ -861,6 +876,11 @@ function updateClubEarnedPoints() {
   if (!el) return;
   const total = getClubOrderTotal();
   const punti = Math.floor(total / 10);
+  const bannerPoints = document.getElementById("checkoutEarnedPoints");
+
+if (bannerPoints) {
+    bannerPoints.textContent = punti;
+}
   if (punti > 0) {
     el.textContent = `Con questo ordine riceverai ${punti} ${punti === 1 ? "punto" : "punti"}`;
     el.style.display = "block";
