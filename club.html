@@ -75,9 +75,34 @@ input:focus{border-color:var(--brown);box-shadow:0 0 0 3px rgba(109,60,39,.1)}
 @media(max-width:780px){
   header{height:64px}.brand small{display:none}.hero{grid-template-columns:1fr;min-height:auto;padding:45px 0}.preview{transform:none}.quick{grid-template-columns:1fr}.form-row,.reward-grid,.staff-layout{grid-template-columns:1fr}.modal{border-radius:25px 25px 0 0;max-height:95vh}.overlay{align-items:flex-end;padding:0}.modal-pad{padding:25px 18px calc(25px + env(safe-area-inset-bottom))}footer{flex-direction:column}
 }
+#backToOrder{
+    position:fixed;
+    top:18px;
+    left:18px;
+    z-index:9999;
+}
+
+#backToOrder a{
+    display:inline-block;
+    text-decoration:none;
+    background:white;
+    color:#2E6B40;
+    padding:10px 16px;
+    border-radius:999px;
+    font-weight:700;
+    box-shadow:0 4px 12px rgba(0,0,0,.15);
+    transition:.2s;
+}
+
+#backToOrder a:hover{
+    transform:translateY(-2px);
+}
 </style>
 </head>
 <body>
+  <div id="backToOrder">
+    <a href="index.html">← Ordina</a>
+</div>
 <header class="shell">
   <div class="brand"><span class="logo">🥙</span><span>Club del Borgo<small>La Piadina del Borgo</small></span></div>
   <button id="topMemberBtn" class="top-btn">👤 La mia tessera</button>
