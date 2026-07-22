@@ -1910,6 +1910,44 @@ function slotsDisponibiliPerData(d) {
     return h * 60 + m >= limite;
   });
 }
+function buildGiorniOptions() {
+  const sel = document.getElementById("giorno");
+  const valoreSelezionato = sel.value;
+  const oggi = new Date();
+
+  let html = '<option value="">Scegli un giorno</option>';
+  let trovati = 0;
+
+  for (let i = 0; i < 14 && trovati < 7; i++) {
+    const d = new Date(
+      oggi.getFullYear(),
+      oggi.getMonth(),
+      oggi.getDate() + i
+    );
+
+    if (CLOSED_WEEKDAYS.includes(d.getDay())) continue;
+    if (i === 0 && slotsDisponibiliPerData(d).length === 0) continue;
+
+    let label;
+
+    if (i === 0) label = "Oggi";
+    else if (i === 1) label = "Domani";
+    else label = GIORNI_NOMI[d.getDay()];
+
+    label += ` ${String(d.getDate()).padStart(2, "0")}/${String(
+      d.getMonth() + 1
+    ).padStart(2, "0")}`;
+
+    html += `<option value="${ymd(d)}">${label}</option>`;
+    trovati++;
+  }
+
+  sel.innerHTML = html;
+
+  if ([...sel.options].some(option => option.value === valoreSelezionato)) {
+    sel.value = valoreSelezionato;
+  }
+}
 function buildOrariOptions() {
   const sel = document.getElementById("orario");
   const valoreSelezionato = sel.value;
