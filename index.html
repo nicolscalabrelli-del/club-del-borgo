@@ -872,22 +872,65 @@ function getClubOrderTotal() {
 }
 
 function updateClubEarnedPoints() {
+
   const el = document.getElementById("clubConnectedPoints");
-  if (!el) return;
-  const total = getClubOrderTotal();
-  const punti = Math.floor(total / 10);
+  const banner = document.querySelector(".club-points-banner");
   const bannerPoints = document.getElementById("checkoutEarnedPoints");
 
-if (bannerPoints) {
+  if (!el || !banner) return;
+
+  const total = getClubOrderTotal();
+  const punti = Math.floor(total / 10);
+
+  if (bannerPoints) {
     bannerPoints.textContent = punti;
-}
-  if (punti > 0) {
-    el.textContent = `Con questo ordine riceverai ${punti} ${punti === 1 ? "punto" : "punti"}`;
-    el.style.display = "block";
+  }
+
+  const orario = document.getElementById("orario").value;
+
+  if (!orario) {
+
+    banner.innerHTML = `
+      🎁 <strong>Non perdere i punti di questo ordine!</strong><br>
+      Seleziona prima un orario di ritiro.
+    `;
+
+    el.style.display = "none";
+    return;
+  }
+
+  const [h,m] = orario.split(":").map(Number);
+  const minuti = h * 60 + m;
+
+  const valido = minuti >= 960 && minuti <= 1130;
+
+  if (valido) {
+
+    banner.innerHTML = `
+      🎁 <strong>Non perdere i punti di questo ordine!</strong><br>
+      Registrati gratuitamente e questo ordine ti farà guadagnare
+      <strong>${punti} ${punti===1?"punto":"punti"}</strong>
+      verso il tuo prossimo premio.
+    `;
+
+    if (punti > 0) {
+      el.textContent = `Con questo ordine riceverai ${punti} ${punti===1?"punto":"punti"}`;
+      el.style.display = "block";
+    } else {
+      el.style.display = "none";
+    }
+
   } else {
-    el.textContent = "";
+
+    banner.innerHTML = `
+      ⚠️ <strong>Per questo orario non vengono assegnati punti.</strong><br>
+      I punti del Club vengono assegnati solo ai ritiri tra le
+      <strong>16:00 e le 18:50</strong>.
+    `;
+
     el.style.display = "none";
   }
+
 }
 
 function renderClubState() {
@@ -1894,7 +1937,12 @@ function buildOrariOptions() {
   const slots = slotsDisponibiliPerData(new Date(y, m - 1, d)).filter(t => !isSlotClosed(giorno, t));
   sel.innerHTML = '<option value="">Scegli un orario</option>' + slots.map(t => `<option>${t}</option>`).join("");
 }
-document.getElementById("giorno").addEventListener("change", buildOrariOptions);
+document.getElementById("giorno").addEventListener("change", () => {
+  buildOrariOptions();
+  updateClubEarnedPoints();
+});
+
+document.getElementById("orario").addEventListener("change", updateClubEarnedPoints);
 buildGiorniOptions();
 buildOrariOptions();
 
